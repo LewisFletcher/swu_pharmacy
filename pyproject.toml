@@ -4,7 +4,6 @@ version = "0.1.0"
 description = ""
 authors = ["Lewis Fletcher <lew.fletcher3@gmail.com>"]
 license = "3"
-readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.12"
