@@ -1,0 +1,19 @@
+{% extends "index.html" %}
+
+{% block title %}Delete {{ object }} - SWU Pharm{% endblock %}
+
+{% block content %}
+<div class="flex justify-center px-4 py-16">
+    <div class="card w-full max-w-md bg-base-100 border border-base-300 shadow-sm">
+        <div class="card-body">
+            <h1 class="card-title text-xl">Delete {{ object }}?</h1>
+            <p class="text-sm text-base-content/60">This action cannot be undone.</p>
+            <form method="post" class="mt-4 flex gap-3">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-error">Delete</button>
+                <a href="{% url cancel_url %}" class="btn btn-ghost">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

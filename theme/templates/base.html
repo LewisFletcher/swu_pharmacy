@@ -1,0 +1,37 @@
+{% load static tailwind_tags %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SWU Pharm{% endblock %}</title>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.13.5/cdn.js"></script>
+    <script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
+    {% tailwind_css %}
+    {% block head %}
+    {% endblock %}
+</head>
+<body class="bg-base-200 min-h-screen flex flex-col">
+    <div x-data="{ mobileMenuOpen: false }" class="flex flex-col min-h-screen">
+        <!-- Navigation -->
+        {% block navbar %}
+        {% endblock %}
+
+        <!-- Content -->
+        <main class="pt-16 flex-1">
+            {% include 'messages.html' %}
+            {% block content %}
+            {% endblock %}
+        </main>
+
+        <!-- Footer -->
+        <footer class="border-t border-base-300 bg-base-100 py-4">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm text-base-content/60">
+                &copy; {% now "Y" %} Swinging Udder Pharmacy. Internal use only.
+            </div>
+        </footer>
+    </div>
+    {% block extra_body %}
+    {% endblock %}
+</body>
+</html>

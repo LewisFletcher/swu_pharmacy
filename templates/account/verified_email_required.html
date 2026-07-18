@@ -1,0 +1,27 @@
+{% extends "index.html" %}
+{% load i18n %}
+{% load allauth %}
+
+{% block title %}Verify Your Email - SWU Pharm{% endblock %}
+
+{% block content %}
+<div class="flex justify-center px-4 py-16">
+    <div class="card w-full max-w-md bg-base-100 border border-base-300 shadow-sm">
+        <div class="card-body">
+            {% element h1 %}
+                {% trans "Verify Your Email Address" %}
+            {% endelement %}
+            {% url 'account_email' as email_url %}
+            {% element p %}
+                {% blocktrans %}This part of the site requires us to verify that you are who you claim to be. For this purpose, we require that you verify ownership of your email address.{% endblocktrans %}
+            {% endelement %}
+            {% element p %}
+                {% blocktrans %}We have sent an email to you for verification. Please click on the link inside that email. If you do not see the verification email in your main inbox, check your spam folder.{% endblocktrans %}
+            {% endelement %}
+            {% element p %}
+                {% blocktrans %}<strong>Note:</strong> you can still <a href="{{ email_url }}" class="link link-primary">change your email address</a>.{% endblocktrans %}
+            {% endelement %}
+        </div>
+    </div>
+</div>
+{% endblock content %}

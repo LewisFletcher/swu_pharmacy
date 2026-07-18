@@ -1,0 +1,24 @@
+{% extends "index.html" %}
+
+{% block title %}Review Prescription - SWU Pharm{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 sm:px-6 py-8">
+    <h1 class="text-2xl font-semibold text-base-content mb-2">Review Prescription</h1>
+    <p class="text-base-content/60 mb-6">Confirm the details below. This is the label that will be generated.</p>
+
+    <div class="card bg-base-100 border border-base-300 shadow-sm">
+        <div class="card-body text-base-content">
+            {% include "pharmacy/_label_content.html" with prescription=preview %}
+        </div>
+    </div>
+
+    <div class="flex gap-3 mt-6">
+        <a href="{% url 'pharmacy:prescription-add' %}?edit=1" class="btn btn-outline">Make Edits</a>
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-primary">Confirm</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

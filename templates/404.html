@@ -1,0 +1,21 @@
+{% extends "index.html" %}
+{% block content %}
+<div class="flex justify-center px-4 py-16">
+    <div class="card w-full max-w-lg bg-base-100 border border-base-300 shadow-sm">
+        <div class="card-body items-center text-center">
+            <svg class="w-12 h-12 text-base-content/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <h1 class="text-2xl font-semibold mt-2">Page Not Found</h1>
+            <p class="text-base-content/60">The page you are looking for wasn't found. Please check the URL or use the navigation menu.</p>
+            {% if user.is_staff %}
+            <p class="text-sm text-base-content/40">Error: {{ exception }}</p>
+            {% endif %}
+            <div class="flex gap-3 mt-4">
+                <a href="/" class="btn btn-primary">Return Home</a>
+                <button onclick="history.back()" class="btn btn-outline">Go Back</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends "index.html" %}
+{% load django_tables2 %}
+
+{% block title %}{{ title }} - SWU Pharm{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="flex items-center justify-between mb-6">
+        <h1 class="text-2xl font-semibold text-base-content">{{ title }}</h1>
+        <a href="{% url add_url %}" class="btn btn-primary">+ New</a>
+    </div>
+    {% render_table table %}
+</div>
+{% endblock %}

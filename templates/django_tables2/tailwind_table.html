@@ -1,0 +1,110 @@
+{% load django_tables2 %}
+{% load i18n %}
+
+<div class="border border-base-300 rounded-box overflow-hidden bg-base-100">
+    <div class="overflow-x-auto">
+        <table class="table">
+            {% block table.thead %}
+                {% if table.show_header %}
+                    <thead>
+                        <tr>
+                            {% for column in table.columns %}
+                                <th scope="col" {{ column.attrs.th.as_html }}
+                                    class="{% if column.orderable %}cursor-pointer select-none hover:bg-base-200{% endif %}{% if column.is_ordered %} bg-base-200{% endif %}">
+                                    {% if column.orderable %}
+                                        <a href="{% if column.is_ordered %}{% querystring_replace table.prefixed_order_by_field=column.order_by_alias.opposite %}{% else %}{% querystring_replace table.prefixed_order_by_field=column.order_by_alias %}{% endif %}"
+                                           class="flex items-center gap-1">
+                                            <span>{{ column.header }}</span>
+                                            {% if column.is_ordered %}
+                                                {% if column.order_by_alias.is_descending %}
+                                                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20" aria-label="Sorted descending">
+                                                        <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"/>
+                                                    </svg>
+                                                {% else %}
+                                                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20" aria-label="Sorted ascending">
+                                                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                                                    </svg>
+                                                {% endif %}
+                                            {% else %}
+                                                <svg class="w-3 h-3 text-base-content/30" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-label="Sortable">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"/>
+                                                </svg>
+                                            {% endif %}
+                                        </a>
+                                    {% else %}
+                                        <span>{{ column.header }}</span>
+                                    {% endif %}
+                                </th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                {% endif %}
+            {% endblock table.thead %}
+
+            {% block table.tbody %}
+                <tbody>
+                    {% for row in table.paginated_rows %}
+                        {% block table.tbody.row %}
+                            <tr class="hover">
+                                {% for column, cell in row.items %}
+                                    <td {{ column.attrs.td.as_html }}>
+                                        {% if column.localize == None %}
+                                            {{ cell }}
+                                        {% else %}
+                                            {% if column.localize %}
+                                                {{ cell|localize }}
+                                            {% else %}
+                                                {{ cell|unlocalize }}
+                                            {% endif %}
+                                        {% endif %}
+                                    </td>
+                                {% endfor %}
+                            </tr>
+                        {% endblock table.tbody.row %}
+                    {% empty %}
+                        {% if table.empty_text %}
+                            {% block table.tbody.empty_text %}
+                                <tr>
+                                    <td colspan="{{ table.columns|length }}" class="text-center py-12 text-base-content/60">
+                                        {{ table.empty_text }}
+                                    </td>
+                                </tr>
+                            {% endblock table.tbody.empty_text %}
+                        {% endif %}
+                    {% endfor %}
+                </tbody>
+            {% endblock table.tbody %}
+
+            {% block table.tfoot %}
+                {% if table.has_footer %}
+                    <tfoot>
+                        <tr>
+                            {% for column in table.columns %}
+                                <td {{ column.attrs.tf.as_html }}>{{ column.footer }}</td>
+                            {% endfor %}
+                        </tr>
+                    </tfoot>
+                {% endif %}
+            {% endblock table.tfoot %}
+        </table>
+    </div>
+
+    {% if table.page %}
+    <div class="flex items-center justify-between flex-wrap gap-3 border-t border-base-300 px-4 py-3">
+        <div class="text-sm text-base-content/60">
+            Showing {{ table.page.start_index }}&ndash;{{ table.page.end_index }} of {{ table.page.paginator.count }}
+        </div>
+        <div class="join">
+            {% if table.page.has_previous %}
+                <a href="{% querystring_replace table.prefixed_page_field=1 %}" class="join-item btn btn-sm">First</a>
+                <a href="{% querystring_replace table.prefixed_page_field=table.page.previous_page_number %}" class="join-item btn btn-sm">Prev</a>
+            {% endif %}
+            <span class="join-item btn btn-sm btn-disabled">Page {{ table.page.number }} of {{ table.page.paginator.num_pages }}</span>
+            {% if table.page.has_next %}
+                <a href="{% querystring_replace table.prefixed_page_field=table.page.next_page_number %}" class="join-item btn btn-sm">Next</a>
+                <a href="{% querystring_replace table.prefixed_page_field=table.page.paginator.num_pages %}" class="join-item btn btn-sm">Last</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>

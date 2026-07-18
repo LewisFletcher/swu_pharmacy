@@ -1,0 +1,27 @@
+{% load l10n %}
+<div class="label-content">
+    <p><strong>{{ prescription.practice.name|default:prescription.doctor.name|default:"—" }}</strong></p>
+    {% if prescription.doctor %}
+    <p>{{ prescription.doctor.name }}{% if prescription.doctor.phone_number %} &middot; {{ prescription.doctor.phone_number }}{% endif %}</p>
+    {% endif %}
+    {% if prescription.practice.address %}
+    <p>{{ prescription.practice.address }}</p>
+    {% endif %}
+    <hr>
+    <p><strong>Client:</strong> {{ prescription.client.name|default:"—" }}</p>
+    <p><strong>Animal(s):</strong> {{ prescription.animals_treated }} {{ prescription.animal_species }}</p>
+    <p><strong>Date:</strong> {{ prescription.date_of_prescription }}</p>
+    {% if prescription.expiration_date %}<p><strong>Expires:</strong> {{ prescription.expiration_date }}</p>{% endif %}
+    <hr>
+    <p><strong>{{ prescription.medication.brand_name|default:"—" }}</strong> ({{ prescription.medication.drug_name }})</p>
+    <p>Active Ingredient: {{ prescription.medication.active_ingredient }}</p>
+    {% if prescription.strength %}<p>Strength: {{ prescription.strength }}</p>{% endif %}
+    <p>Quantity: {{ prescription.quantity }}</p>
+    <p><strong>Directions:</strong> {{ prescription.dosage_instructions|default:"—" }}</p>
+    <p>Route: {{ prescription.route_of_administration|default:"—" }} &middot; Duration: {{ prescription.duration|default:"—" }}</p>
+    <p>Refills: {{ prescription.number_of_refills }}</p>
+    {% if prescription.cautionary_notes %}<p><strong>Caution:</strong> {{ prescription.cautionary_notes }}</p>{% endif %}
+    {% if prescription.medication.milk_withhold_period or prescription.medication.meat_withhold_period %}
+    <p><strong>Withdrawal:</strong> Milk: {{ prescription.medication.milk_withhold_period|default:"N/A" }} &middot; Meat/Slaughter: {{ prescription.medication.meat_withhold_period|default:"N/A" }}</p>
+    {% endif %}
+</div>

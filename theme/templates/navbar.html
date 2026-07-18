@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block navbar %}
+{% with request.path as current_path %}
+<nav class="navbar bg-base-100 border-b border-base-300 fixed top-0 w-full z-50 px-4 sm:px-6 lg:px-8">
+    <div class="navbar-start">
+        <a href="{% url 'landing' %}" class="flex items-center gap-2 font-semibold text-lg text-base-content">
+            <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3.75H6.912a2.25 2.25 0 00-2.15 1.588L2.35 13.177a2.25 2.25 0 00-.1.661V18a2.25 2.25 0 002.25 2.25h15a2.25 2.25 0 002.25-2.25v-4.162c0-.224-.034-.447-.1-.661L19.24 5.338a2.25 2.25 0 00-2.15-1.588H15M2.25 13.5h4.86c.618 0 1.176.363 1.43.928l1.088 2.395c.254.565.812.927 1.43.927h2.884c.618 0 1.176-.362 1.43-.927l1.088-2.395a1.575 1.575 0 011.43-.928h4.86" />
+            </svg>
+            <span>SWU Pharm</span>
+        </a>
+    </div>
+
+    <div class="navbar-center hidden md:flex">
+        <ul class="menu menu-horizontal gap-1 px-1">
+            <li>
+                <a href="{% url 'landing' %}" class="{% if current_path == '/' %}menu-active{% endif %}">Dashboard</a>
+            </li>
+            <li>
+                <a href="{% url 'pharmacy:prescription-list' %}" class="{% if '/pharmacy/prescriptions/' in current_path %}menu-active{% endif %}">Prescriptions</a>
+            </li>
+            <li>
+                <a href="{% url 'pharmacy:medication-list' %}" class="{% if '/pharmacy/medications/' in current_path %}menu-active{% endif %}">Medications</a>
+            </li>
+            <li>
+                <a href="{% url 'pharmacy:doctor-list' %}" class="{% if '/pharmacy/doctors/' in current_path %}menu-active{% endif %}">Doctors</a>
+            </li>
+            <li>
+                <a href="{% url 'pharmacy:client-list' %}" class="{% if '/pharmacy/clients/' in current_path %}menu-active{% endif %}">Clients</a>
+            </li>
+        </ul>
+    </div>
+
+    <div class="navbar-end gap-2">
+        {% if user.is_authenticated %}
+        <div class="dropdown dropdown-end">
+            <button tabindex="0" class="btn btn-ghost gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                <span class="hidden sm:inline">{{ user.get_username|truncatechars:20 }}</span>
+            </button>
+            <ul tabindex="0" class="dropdown-content menu bg-base-100 border border-base-300 rounded-box z-50 mt-2 w-48 p-2 shadow-sm">
+                <li>
+                    <form method="post" action="{% url 'account_logout' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="w-full text-left">Sign out</button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+        {% else %}
+        <a href="{% url 'account_login' %}" class="btn btn-primary btn-sm">Sign in</a>
+        {% endif %}
+
+        <!-- Mobile menu toggle -->
+        <button class="btn btn-ghost btn-square md:hidden" @click="mobileMenuOpen = !mobileMenuOpen" aria-label="Toggle menu">
+            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+        </button>
+    </div>
+</nav>
+
+<!-- Mobile menu -->
+<div x-show="mobileMenuOpen"
+     x-transition
+     @click.away="mobileMenuOpen = false"
+     class="md:hidden fixed top-16 w-full z-40 bg-base-100 border-b border-base-300">
+    <ul class="menu p-2">
+        <li><a href="{% url 'landing' %}" class="{% if current_path == '/' %}menu-active{% endif %}">Dashboard</a></li>
+        <li><a href="{% url 'pharmacy:prescription-list' %}">Prescriptions</a></li>
+        <li><a href="{% url 'pharmacy:medication-list' %}">Medications</a></li>
+        <li><a href="{% url 'pharmacy:doctor-list' %}">Doctors</a></li>
+        <li><a href="{% url 'pharmacy:client-list' %}">Clients</a></li>
+    </ul>
+</div>
+{% endwith %}
+{% endblock %}

@@ -1,0 +1,113 @@
+{% extends "index.html" %}
+
+{% block title %}Dashboard - SWU Pharm{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <div>
+        <h1 class="text-2xl font-semibold text-base-content">Dashboard</h1>
+        <p class="mt-1 text-base-content/60">Welcome back, {{ user.get_username }}.</p>
+    </div>
+
+    <!-- Primary actions -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <a href="{% url 'pharmacy:prescription-add' %}" class="card bg-primary text-primary-content shadow-sm hover:shadow-md transition-shadow">
+            <div class="card-body flex-row items-center gap-4">
+                <svg class="w-8 h-8 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div>
+                    <h2 class="card-title text-lg">New Prescription</h2>
+                    <p class="text-sm opacity-80">Write and dispense a new prescription</p>
+                </div>
+            </div>
+        </a>
+        <a href="{% url 'pharmacy:prescription-list' %}" class="card bg-base-100 border border-base-300 shadow-sm hover:shadow-md transition-shadow">
+            <div class="card-body flex-row items-center gap-4">
+                <svg class="w-8 h-8 shrink-0 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                <div>
+                    <h2 class="card-title text-lg">Prescription History</h2>
+                    <p class="text-sm text-base-content/60">Search and filter all dispensed prescriptions</p>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats stats-vertical sm:stats-horizontal shadow-sm border border-base-300 w-full bg-base-100">
+        <div class="stat">
+            <div class="stat-title">Prescriptions This Week</div>
+            <div class="stat-value text-primary">{{ prescriptions_this_week }}</div>
+        </div>
+        <div class="stat">
+            <div class="stat-title">Total Prescriptions</div>
+            <div class="stat-value">{{ prescription_count }}</div>
+        </div>
+        <div class="stat">
+            <div class="stat-title">Clients</div>
+            <div class="stat-value">{{ client_count }}</div>
+        </div>
+        <div class="stat">
+            <div class="stat-title">Medications</div>
+            <div class="stat-value">{{ medication_count }}</div>
+        </div>
+        <div class="stat">
+            <div class="stat-title">Doctors</div>
+            <div class="stat-value">{{ doctor_count }}</div>
+        </div>
+    </div>
+
+    <!-- Quick links -->
+    <div>
+        <h2 class="text-sm font-semibold text-base-content/60 uppercase tracking-wide mb-3">Quick Links</h2>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <a href="{% url 'pharmacy:medication-list' %}" class="btn btn-outline justify-start">Medications</a>
+            <a href="{% url 'pharmacy:doctor-list' %}" class="btn btn-outline justify-start">Doctors</a>
+            <a href="{% url 'pharmacy:client-list' %}" class="btn btn-outline justify-start">Clients</a>
+            <a href="{% url 'pharmacy:client-add' %}" class="btn btn-outline justify-start">+ New Client</a>
+        </div>
+    </div>
+
+    <!-- Recent prescriptions -->
+    <div>
+        <div class="flex items-center justify-between mb-3">
+            <h2 class="text-sm font-semibold text-base-content/60 uppercase tracking-wide">Recent Prescriptions</h2>
+            <a href="{% url 'pharmacy:prescription-list' %}" class="link link-primary text-sm">View all</a>
+        </div>
+        <div class="border border-base-300 rounded-box overflow-hidden bg-base-100">
+            <div class="overflow-x-auto">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Client</th>
+                            <th>Medication</th>
+                            <th>Doctor</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for prescription in recent_prescriptions %}
+                        <tr class="hover">
+                            <td>{{ prescription.date_of_prescription }}</td>
+                            <td>{{ prescription.client }}</td>
+                            <td>{{ prescription.medication }}</td>
+                            <td>{{ prescription.doctor|default:"—" }}</td>
+                            <td class="text-right">
+                                <a href="{% url 'pharmacy:prescription-detail' prescription.pk %}" class="btn btn-xs btn-outline">View</a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center py-8 text-base-content/60">No prescriptions yet.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

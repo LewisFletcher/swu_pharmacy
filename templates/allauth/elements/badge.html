@@ -1,0 +1,5 @@
+{% load allauth allauth_theme %}
+<span class="{{ attrs.tags|badge_classes }}" {% if attrs.title %}title="{{ attrs.title }}"{% endif %}>
+    {% slot %}
+    {% endslot %}
+</span>

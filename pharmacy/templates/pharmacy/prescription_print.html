@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Label - Prescription #{{ prescription.pk }}</title>
+<style>
+    body { font-family: Arial, Helvetica, sans-serif; font-size: 12px; color: #111; margin: 0; padding: 1.5rem; }
+    .label-content { max-width: 420px; }
+    .label-content p { margin: 2px 0; }
+    .label-content hr { border: none; border-top: 1px solid #ccc; margin: 8px 0; }
+    .toolbar { margin-bottom: 1.5rem; }
+    .toolbar button, .toolbar a {
+        font-family: inherit;
+        font-size: 13px;
+        padding: 6px 14px;
+        border: 1px solid #999;
+        border-radius: 4px;
+        background: #f5f5f5;
+        color: #111;
+        text-decoration: none;
+        cursor: pointer;
+        margin-right: 8px;
+    }
+    @media print {
+        .toolbar { display: none; }
+        body { padding: 0; }
+    }
+</style>
+</head>
+<body>
+    <div class="toolbar">
+        <button onclick="window.print()">Print</button>
+        <a href="{% url 'pharmacy:prescription-detail' prescription.pk %}">Back</a>
+    </div>
+    {% include "pharmacy/_label_content.html" %}
+</body>
+</html>

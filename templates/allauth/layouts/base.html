@@ -1,0 +1,9 @@
+{% extends "index.html" %}
+
+{% block title %}{% block head_title %}{% endblock %} - SWU Pharm{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 sm:px-6 py-8">
+    {% block allauth_body %}{% endblock %}
+</div>
+{% endblock %}
