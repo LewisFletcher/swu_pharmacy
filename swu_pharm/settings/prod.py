@@ -8,6 +8,10 @@ DEBUG = False
 db_url = os.environ["DATABASE_URL"]
 DATABASES = {"default": dj_database_url.parse(db_url, engine='django.db.backends.postgresql')}
 
+MIDDLEWARE += [
+    "whitenoise.middleware.WhiteNoiseMiddleware",
+]
+
 ALLOWED_HOSTS = ['swupharmacy-production.up.railway.app']
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
