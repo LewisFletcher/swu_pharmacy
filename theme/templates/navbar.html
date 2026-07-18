@@ -28,6 +28,9 @@
             <li>
                 <a href="{% url 'pharmacy:client-list' %}" class="{% if '/pharmacy/clients/' in current_path %}menu-active{% endif %}">Clients</a>
             </li>
+            <li>
+                <a href="{% url 'pharmacy:practice-detail' %}" class="{% if '/pharmacy/practice/' in current_path %}menu-active{% endif %}">Practice</a>
+            </li>
         </ul>
     </div>
 
@@ -73,6 +76,7 @@
         <li><a href="{% url 'pharmacy:medication-list' %}">Medications</a></li>
         <li><a href="{% url 'pharmacy:doctor-list' %}">Doctors</a></li>
         <li><a href="{% url 'pharmacy:client-list' %}">Clients</a></li>
+        <li><a href="{% url 'pharmacy:practice-detail' %}">Practice</a></li>
     </ul>
 </div>
 {% endwith %}

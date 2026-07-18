@@ -5,4 +5,6 @@ from django.contrib.auth.models import AbstractUser
 # Override user model
 
 class User(AbstractUser):
-    pass
+    practice = models.ForeignKey(
+        'pharmacy.Practice', on_delete=models.SET_NULL, null=True, blank=True, related_name='staff'
+    )

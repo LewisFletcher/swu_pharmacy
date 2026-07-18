@@ -2,7 +2,6 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from dal_alight.views import AlightQuerySetView
 
 from .models import (
-    Address,
     Client,
     Doctor,
     Medication,
@@ -31,11 +30,6 @@ class MedicationAutocomplete(LoginRequiredMixin, AlightQuerySetView):
 class PracticeAutocomplete(LoginRequiredMixin, AlightQuerySetView):
     model = Practice
     search_fields = ['name']
-
-
-class AddressAutocomplete(LoginRequiredMixin, AlightQuerySetView):
-    model = Address
-    search_fields = ['street', 'city', 'state', 'zip_code']
 
 
 class MedicationStrengthAutocomplete(LoginRequiredMixin, AlightQuerySetView):

@@ -81,6 +81,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     "allauth.account.middleware.AccountMiddleware",
     'simple_history.middleware.HistoryRequestMiddleware',
+    'pharmacy.middleware.PracticeRequiredMiddleware',
 ]
 
 ROOT_URLCONF = 'swu_pharm.urls'

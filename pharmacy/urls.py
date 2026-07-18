@@ -10,7 +10,6 @@ urlpatterns = [
     path("autocomplete/doctor/", autocompletes.DoctorAutocomplete.as_view(), name="doctor-autocomplete"),
     path("autocomplete/medication/", autocompletes.MedicationAutocomplete.as_view(), name="medication-autocomplete"),
     path("autocomplete/practice/", autocompletes.PracticeAutocomplete.as_view(), name="practice-autocomplete"),
-    path("autocomplete/address/", autocompletes.AddressAutocomplete.as_view(), name="address-autocomplete"),
     path("autocomplete/strength/", autocompletes.MedicationStrengthAutocomplete.as_view(), name="strength-autocomplete"),
     path("autocomplete/size/", autocompletes.MedicationSizeAutocomplete.as_view(), name="size-autocomplete"),
     path("autocomplete/concentration/", autocompletes.MedicationConcentrationAutocomplete.as_view(), name="concentration-autocomplete"),
@@ -41,4 +40,11 @@ urlpatterns = [
     path("clients/add/", views.ClientCreateView.as_view(), name="client-add"),
     path("clients/<int:pk>/edit/", views.ClientUpdateView.as_view(), name="client-edit"),
     path("clients/<int:pk>/delete/", views.ClientDeleteView.as_view(), name="client-delete"),
+
+    # Practice (gate destination, staff management, invites)
+    path("practice/setup/", views.PracticeSetupView.as_view(), name="practice-setup"),
+    path("practice/", views.PracticeDetailView.as_view(), name="practice-detail"),
+    path("practice/invite/", views.PracticeInviteSendView.as_view(), name="practice-invite-send"),
+    path("practice/invite/<str:token>/", views.PracticeInviteAcceptView.as_view(), name="practice-invite-accept"),
+    path("practice/staff/<int:user_id>/remove/", views.PracticeStaffRemoveView.as_view(), name="practice-staff-remove"),
 ]

@@ -1,3 +1,5 @@
+import secrets
+
 from django.db import models
 from simple_history.models import HistoricalRecords
 
@@ -28,11 +30,17 @@ class Address(models.Model):
 
 class ClientBusiness(models.Model):
     '''Model containing client business information.'''
+    client = models.ForeignKey('Client', on_delete=models.CASCADE, related_name='businesses')
     name = models.CharField(max_length=100)
-    addresses = models.ManyToManyField(Address, related_name='client_businesses')
+    address = models.ForeignKey(Address, related_name='client_businesses', blank=True, null=True, on_delete=models.SET_NULL)
     phone_number = models.CharField(max_length=20, blank=True, null=True)
     email = models.EmailField(blank=True, null=True)
     website = models.URLField(blank=True, null=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['client', 'address'], name='unique_client_business_address'),
+        ]
 
     def __str__(self):
         return self.name
@@ -130,6 +138,27 @@ class Practice(TrackerModel):
 
     def __str__(self):
         return self.name
+
+class PracticeInvite(models.Model):
+    '''An outstanding invitation for someone to join a practice's staff.'''
+    practice = models.ForeignKey(Practice, on_delete=models.CASCADE, related_name='invites')
+    email = models.EmailField()
+    token = models.CharField(max_length=64, unique=True, default=secrets.token_urlsafe)
+    invited_by = models.ForeignKey(
+        'accounts.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='sent_practice_invites'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    accepted_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Invite for {self.email} to {self.practice.name}"
+
+    @property
+    def is_accepted(self):
+        return self.accepted_at is not None
 
 class Prescription(TrackerModel):
     '''Model containing prescription information.'''

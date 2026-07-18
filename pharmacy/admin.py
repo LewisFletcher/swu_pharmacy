@@ -11,6 +11,7 @@ from .models import (
     MedicationSize,
     MedicationStrength,
     Practice,
+    PracticeInvite,
     Prescription,
 )
 
@@ -23,9 +24,9 @@ class AddressAdmin(admin.ModelAdmin):
 
 @admin.register(ClientBusiness)
 class ClientBusinessAdmin(admin.ModelAdmin):
-    list_display = ('name', 'phone_number', 'email', 'website')
-    search_fields = ('name', 'email')
-    filter_horizontal = ('addresses',)
+    list_display = ('name', 'client', 'address', 'phone_number', 'email', 'website')
+    search_fields = ('name', 'email', 'client__name')
+    autocomplete_fields = ('client', 'address')
 
 
 @admin.register(Client)
@@ -70,6 +71,13 @@ class MedicationAdmin(SimpleHistoryAdmin):
 class PracticeAdmin(admin.ModelAdmin):
     list_display = ('name', 'phone_number', 'email', 'website')
     search_fields = ('name', 'email')
+
+
+@admin.register(PracticeInvite)
+class PracticeInviteAdmin(admin.ModelAdmin):
+    list_display = ('email', 'practice', 'invited_by', 'created_at', 'accepted_at')
+    list_filter = ('practice',)
+    search_fields = ('email', 'practice__name')
 
 
 @admin.register(Prescription)

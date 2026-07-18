@@ -1,0 +1,38 @@
+{% extends "index.html" %}
+
+{% block title %}Set Up Your Practice - SWU Pharm{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 sm:px-6 py-8">
+    <div class="card bg-base-100 border border-base-300 shadow-sm">
+        <div class="card-body">
+            <h1 class="card-title text-xl mb-1">Set Up Your Practice</h1>
+            <p class="text-sm text-base-content/60 mb-4">
+                You'll need a practice before you can use SWU Pharm. If a teammate already has one set up,
+                ask them to invite you instead of creating a new one here.
+            </p>
+            {% if form.non_field_errors %}
+            <div class="alert alert-error text-sm mb-4">{{ form.non_field_errors }}</div>
+            {% endif %}
+            <form method="post" class="space-y-1">
+                {% csrf_token %}
+                {% for field in form %}
+                <div class="form-control w-full mb-3">
+                    <label class="label" for="{{ field.id_for_label }}">
+                        <span class="label-text">{{ field.label }}{% if field.field.required %} <span class="text-error">*</span>{% endif %}</span>
+                    </label>
+                    {{ field }}
+                    {% if field.help_text %}
+                    <span class="label"><span class="label-text-alt text-base-content/60">{{ field.help_text }}</span></span>
+                    {% endif %}
+                    {% for error in field.errors %}
+                    <span class="label"><span class="label-text-alt text-error">{{ error }}</span></span>
+                    {% endfor %}
+                </div>
+                {% endfor %}
+                <button type="submit" class="btn btn-primary mt-4">{{ submit_label|default:"Save" }}</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

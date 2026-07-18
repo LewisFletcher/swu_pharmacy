@@ -1,0 +1,86 @@
+{% extends "index.html" %}
+
+{% block title %}{{ practice.name }} - SWU Pharm{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-8">
+    <div>
+        <h1 class="text-2xl font-semibold text-base-content">{{ practice.name }}</h1>
+        <p class="text-base-content/60">
+            {{ practice.address|default:"No address on file" }}
+            {% if practice.phone_number %} &middot; {{ practice.phone_number }}{% endif %}
+        </p>
+    </div>
+
+    <div>
+        <h2 class="text-sm font-semibold text-base-content/60 uppercase tracking-wide mb-3">Staff</h2>
+        <div class="border border-base-300 rounded-box overflow-hidden bg-base-100">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for member in staff %}
+                    <tr class="hover">
+                        <td>{{ member.get_username }}{% if member == request.user %} <span class="badge badge-neutral ml-1">You</span>{% endif %}</td>
+                        <td>{{ member.email|default:"—" }}</td>
+                        <td class="text-right">
+                            {% if member != request.user %}
+                            <form method="post" action="{% url 'pharmacy:practice-staff-remove' member.pk %}" onsubmit="return confirm('Remove {{ member.get_username }} from {{ practice.name }}?');">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-xs btn-outline btn-error">Remove</button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div>
+        <h2 class="text-sm font-semibold text-base-content/60 uppercase tracking-wide mb-3">Invite a Staff Member</h2>
+        <div class="card bg-base-100 border border-base-300 shadow-sm">
+            <div class="card-body">
+                <form method="post" action="{% url 'pharmacy:practice-invite-send' %}" class="flex flex-wrap items-end gap-3">
+                    {% csrf_token %}
+                    <div class="form-control flex-1 min-w-[200px]">
+                        <label class="label" for="{{ invite_form.email.id_for_label }}"><span class="label-text">Email</span></label>
+                        {{ invite_form.email }}
+                    </div>
+                    <button type="submit" class="btn btn-primary">Send Invite</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {% if pending_invites %}
+    <div>
+        <h2 class="text-sm font-semibold text-base-content/60 uppercase tracking-wide mb-3">Pending Invites</h2>
+        <div class="border border-base-300 rounded-box overflow-hidden bg-base-100">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Email</th>
+                        <th>Invited</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for invite in pending_invites %}
+                    <tr>
+                        <td>{{ invite.email }}</td>
+                        <td>{{ invite.created_at }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,14 +1,26 @@
+from django.contrib import messages
+from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.shortcuts import redirect
-from django.urls import reverse_lazy
-from django.views.generic import CreateView, DeleteView, DetailView, TemplateView, UpdateView
+from django.core.mail import send_mail
+from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse, reverse_lazy
+from django.utils import timezone
+from django.views.generic import CreateView, DeleteView, DetailView, TemplateView, UpdateView, View
 from django_filters.views import FilterView
 from django_tables2 import SingleTableMixin, SingleTableView
 
 from .filters import PrescriptionFilter
-from .forms import ClientForm, DoctorForm, MedicationForm, PrescriptionForm
+from .forms import (
+    ClientBusinessFormSet,
+    ClientForm,
+    DoctorForm,
+    MedicationForm,
+    PracticeForm,
+    PracticeInviteForm,
+    PrescriptionForm,
+)
 from .labels import generate_prescription_label
-from .models import Client, Doctor, Medication, Prescription
+from .models import Client, Doctor, Medication, Practice, PracticeInvite, Prescription
 from .tables import ClientTable, DoctorTable, MedicationTable, PrescriptionTable
 
 PENDING_PRESCRIPTION_SESSION_KEY = "pending_prescription"
@@ -200,19 +212,53 @@ class ClientListView(LoginRequiredMixin, SingleTableView):
 
 
 class ClientCreateView(LoginRequiredMixin, CreateView):
+    '''Creates a Client together with its (required, at-least-one) businesses.'''
     model = Client
     form_class = ClientForm
-    template_name = "pharmacy/form.html"
+    template_name = "pharmacy/client_form.html"
     extra_context = {"title": "New Client", "cancel_url": "pharmacy:client-list"}
-    success_url = reverse_lazy("pharmacy:client-list")
+
+    def get(self, request, *args, **kwargs):
+        self.object = None
+        form = self.get_form()
+        formset = ClientBusinessFormSet(instance=Client())
+        return self.render_to_response(self.get_context_data(form=form, formset=formset))
+
+    def post(self, request, *args, **kwargs):
+        self.object = None
+        new_client = Client()
+        form = ClientForm(request.POST, instance=new_client)
+        formset = ClientBusinessFormSet(request.POST, instance=new_client)
+        if form.is_valid() and formset.is_valid():
+            client = form.save()
+            formset.instance = client
+            formset.save()
+            return redirect("pharmacy:client-list")
+        return self.render_to_response(self.get_context_data(form=form, formset=formset))
 
 
 class ClientUpdateView(LoginRequiredMixin, UpdateView):
+    '''Edits a Client together with its businesses.'''
     model = Client
     form_class = ClientForm
-    template_name = "pharmacy/form.html"
+    template_name = "pharmacy/client_form.html"
     extra_context = {"title": "Edit Client", "cancel_url": "pharmacy:client-list"}
-    success_url = reverse_lazy("pharmacy:client-list")
+
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        form = self.get_form()
+        formset = ClientBusinessFormSet(instance=self.object)
+        return self.render_to_response(self.get_context_data(form=form, formset=formset))
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        form = self.get_form()
+        formset = ClientBusinessFormSet(request.POST, instance=self.object)
+        if form.is_valid() and formset.is_valid():
+            form.save()
+            formset.save()
+            return redirect("pharmacy:client-list")
+        return self.render_to_response(self.get_context_data(form=form, formset=formset))
 
 
 class ClientDeleteView(LoginRequiredMixin, DeleteView):
@@ -220,3 +266,123 @@ class ClientDeleteView(LoginRequiredMixin, DeleteView):
     template_name = "pharmacy/confirm_delete.html"
     extra_context = {"cancel_url": "pharmacy:client-list"}
     success_url = reverse_lazy("pharmacy:client-list")
+
+
+# ---- Practice (gate destination, staff management, invites) ----
+
+class PracticeSetupView(LoginRequiredMixin, CreateView):
+    '''Where a user with no practice lands (see PracticeRequiredMiddleware)
+    so they can create one and become its first staff member.'''
+    model = Practice
+    form_class = PracticeForm
+    template_name = "pharmacy/practice_setup.html"
+    extra_context = {"title": "Set Up Your Practice", "submit_label": "Create Practice"}
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated and request.user.practice_id:
+            return redirect("pharmacy:practice-detail")
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        form.instance.created_by = self.request.user
+        form.instance.updated_by = self.request.user
+        response = super().form_valid(form)
+        self.request.user.practice = self.object
+        self.request.user.save(update_fields=["practice"])
+        return response
+
+    def get_success_url(self):
+        return reverse("landing")
+
+
+class PracticeDetailView(LoginRequiredMixin, TemplateView):
+    template_name = "pharmacy/practice_detail.html"
+
+    def get(self, request, *args, **kwargs):
+        if not request.user.practice_id:
+            return redirect("pharmacy:practice-setup")
+        return super().get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        practice = self.request.user.practice
+        context["practice"] = practice
+        context["staff"] = practice.staff.all()
+        context["pending_invites"] = practice.invites.filter(accepted_at__isnull=True)
+        context["invite_form"] = PracticeInviteForm(practice=practice)
+        return context
+
+
+class PracticeInviteSendView(LoginRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        practice = request.user.practice
+        if not practice:
+            return redirect("pharmacy:practice-setup")
+        form = PracticeInviteForm(request.POST, practice=practice)
+        if form.is_valid():
+            invite = form.save(commit=False)
+            invite.practice = practice
+            invite.invited_by = request.user
+            invite.save()
+            self._send_invite_email(request, invite)
+            messages.success(request, f"Invited {invite.email} to join {practice.name}.")
+        else:
+            for error in form.errors.get("email", []):
+                messages.error(request, error)
+        return redirect("pharmacy:practice-detail")
+
+    def _send_invite_email(self, request, invite):
+        accept_url = request.build_absolute_uri(
+            reverse("pharmacy:practice-invite-accept", args=[invite.token])
+        )
+        send_mail(
+            subject=f"You've been invited to join {invite.practice.name} on SWU Pharm",
+            message=(
+                f"{invite.invited_by} has invited you to join {invite.practice.name} "
+                f"on SWU Pharm.\n\nAccept the invite here:\n{accept_url}\n"
+            ),
+            from_email=None,
+            recipient_list=[invite.email],
+        )
+
+
+class PracticeInviteAcceptView(View):
+    '''Reachable while logged out (see EXEMPT_PATH_PREFIXES) so a brand-new
+    invitee can follow the link, sign up, and land back here to join.'''
+
+    def get(self, request, *args, **kwargs):
+        token = kwargs["token"]
+        invite = PracticeInvite.objects.filter(token=token).first()
+
+        if invite is None:
+            messages.error(request, "That invite link is invalid.")
+            return redirect("landing" if request.user.is_authenticated else "account_login")
+        if invite.is_accepted:
+            messages.info(request, "That invite has already been used.")
+            return redirect("landing" if request.user.is_authenticated else "account_login")
+
+        if not request.user.is_authenticated:
+            return redirect(f"{reverse('account_signup')}?next={request.path}")
+
+        request.user.practice = invite.practice
+        request.user.save(update_fields=["practice"])
+        invite.accepted_at = timezone.now()
+        invite.save(update_fields=["accepted_at"])
+        messages.success(request, f"You've joined {invite.practice.name}.")
+        return redirect("landing")
+
+
+class PracticeStaffRemoveView(LoginRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        practice = request.user.practice
+        if not practice:
+            return redirect("pharmacy:practice-setup")
+        User = get_user_model()
+        member = get_object_or_404(User, pk=kwargs["user_id"], practice=practice)
+        if member == request.user:
+            messages.error(request, "You can't remove yourself from the practice.")
+        else:
+            member.practice = None
+            member.save(update_fields=["practice"])
+            messages.success(request, f"Removed {member} from {practice.name}.")
+        return redirect("pharmacy:practice-detail")
