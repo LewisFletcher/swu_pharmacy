@@ -5,8 +5,8 @@ from .models import User
 
 
 class UserAdmin(BaseUserAdmin):
-    list_display = BaseUserAdmin.list_display + ('practice',)
-    list_filter = BaseUserAdmin.list_filter + ('practice',)
+    list_display = BaseUserAdmin.list_display + ('practice', 'practice_role')
+    list_filter = BaseUserAdmin.list_filter + ('practice', 'practice_role')
 
 
 admin.site.register(User, UserAdmin)

@@ -75,8 +75,8 @@ class PracticeAdmin(admin.ModelAdmin):
 
 @admin.register(PracticeInvite)
 class PracticeInviteAdmin(admin.ModelAdmin):
-    list_display = ('email', 'practice', 'invited_by', 'created_at', 'accepted_at')
-    list_filter = ('practice',)
+    list_display = ('email', 'practice', 'role', 'invited_by', 'created_at', 'accepted_at')
+    list_filter = ('practice', 'role')
     search_fields = ('email', 'practice__name')
 
 

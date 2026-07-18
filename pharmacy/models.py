@@ -3,6 +3,8 @@ import secrets
 from django.db import models
 from simple_history.models import HistoricalRecords
 
+from accounts.models import User
+
 # Create your models here.
 
 class TrackerModel(models.Model):
@@ -143,6 +145,7 @@ class PracticeInvite(models.Model):
     '''An outstanding invitation for someone to join a practice's staff.'''
     practice = models.ForeignKey(Practice, on_delete=models.CASCADE, related_name='invites')
     email = models.EmailField()
+    role = models.CharField(max_length=10, choices=User.PracticeRole.choices, default=User.PracticeRole.STAFF)
     token = models.CharField(max_length=64, unique=True, default=secrets.token_urlsafe)
     invited_by = models.ForeignKey(
         'accounts.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='sent_practice_invites'

@@ -171,11 +171,17 @@ class PracticeForm(DaisyFormMixin, NestedAddressFormMixin, forms.ModelForm):
 class PracticeInviteForm(DaisyFormMixin, forms.ModelForm):
     class Meta:
         model = PracticeInvite
-        fields = ('email',)
+        fields = ('email', 'role')
 
-    def __init__(self, *args, practice=None, **kwargs):
+    def __init__(self, *args, practice=None, inviter=None, **kwargs):
         self.practice = practice
+        self.inviter = inviter
         super().__init__(*args, **kwargs)
+        if inviter is not None:
+            self.fields['role'].choices = [
+                (value, label) for value, label in self.fields['role'].choices
+                if inviter.can_grant_role(value)
+            ]
 
     def clean_email(self):
         email = self.cleaned_data['email']

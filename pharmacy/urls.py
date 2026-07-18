@@ -44,7 +44,9 @@ urlpatterns = [
     # Practice (gate destination, staff management, invites)
     path("practice/setup/", views.PracticeSetupView.as_view(), name="practice-setup"),
     path("practice/", views.PracticeDetailView.as_view(), name="practice-detail"),
+    path("practice/edit/", views.PracticeUpdateView.as_view(), name="practice-edit"),
     path("practice/invite/", views.PracticeInviteSendView.as_view(), name="practice-invite-send"),
     path("practice/invite/<str:token>/", views.PracticeInviteAcceptView.as_view(), name="practice-invite-accept"),
     path("practice/staff/<int:user_id>/remove/", views.PracticeStaffRemoveView.as_view(), name="practice-staff-remove"),
+    path("practice/staff/<int:user_id>/role/", views.PracticeStaffRoleChangeView.as_view(), name="practice-staff-role"),
 ]

@@ -287,12 +287,35 @@ class PracticeSetupView(LoginRequiredMixin, CreateView):
         form.instance.created_by = self.request.user
         form.instance.updated_by = self.request.user
         response = super().form_valid(form)
-        self.request.user.practice = self.object
-        self.request.user.save(update_fields=["practice"])
+        user = self.request.user
+        user.practice = self.object
+        user.practice_role = user.PracticeRole.ADMIN
+        user.save(update_fields=["practice", "practice_role"])
         return response
 
     def get_success_url(self):
         return reverse("landing")
+
+
+class PracticeUpdateView(LoginRequiredMixin, UpdateView):
+    '''Lets a staff member update their own practice's info.'''
+    model = Practice
+    form_class = PracticeForm
+    template_name = "pharmacy/form.html"
+    extra_context = {"title": "Edit Practice Info", "cancel_url": "pharmacy:practice-detail"}
+    success_url = reverse_lazy("pharmacy:practice-detail")
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated and not request.user.practice_id:
+            return redirect("pharmacy:practice-setup")
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_object(self, queryset=None):
+        return self.request.user.practice
+
+    def form_valid(self, form):
+        form.instance.updated_by = self.request.user
+        return super().form_valid(form)
 
 
 class PracticeDetailView(LoginRequiredMixin, TemplateView):
@@ -309,7 +332,7 @@ class PracticeDetailView(LoginRequiredMixin, TemplateView):
         context["practice"] = practice
         context["staff"] = practice.staff.all()
         context["pending_invites"] = practice.invites.filter(accepted_at__isnull=True)
-        context["invite_form"] = PracticeInviteForm(practice=practice)
+        context["invite_form"] = PracticeInviteForm(practice=practice, inviter=self.request.user)
         return context
 
 
@@ -318,7 +341,7 @@ class PracticeInviteSendView(LoginRequiredMixin, View):
         practice = request.user.practice
         if not practice:
             return redirect("pharmacy:practice-setup")
-        form = PracticeInviteForm(request.POST, practice=practice)
+        form = PracticeInviteForm(request.POST, practice=practice, inviter=request.user)
         if form.is_valid():
             invite = form.save(commit=False)
             invite.practice = practice
@@ -365,7 +388,8 @@ class PracticeInviteAcceptView(View):
             return redirect(f"{reverse('account_signup')}?next={request.path}")
 
         request.user.practice = invite.practice
-        request.user.save(update_fields=["practice"])
+        request.user.practice_role = invite.role
+        request.user.save(update_fields=["practice", "practice_role"])
         invite.accepted_at = timezone.now()
         invite.save(update_fields=["accepted_at"])
         messages.success(request, f"You've joined {invite.practice.name}.")
@@ -381,8 +405,35 @@ class PracticeStaffRemoveView(LoginRequiredMixin, View):
         member = get_object_or_404(User, pk=kwargs["user_id"], practice=practice)
         if member == request.user:
             messages.error(request, "You can't remove yourself from the practice.")
+        elif not request.user.can_manage(member):
+            messages.error(request, "You don't have permission to remove that person.")
         else:
             member.practice = None
             member.save(update_fields=["practice"])
             messages.success(request, f"Removed {member} from {practice.name}.")
+        return redirect("pharmacy:practice-detail")
+
+
+class PracticeStaffRoleChangeView(LoginRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        practice = request.user.practice
+        if not practice:
+            return redirect("pharmacy:practice-setup")
+        User = get_user_model()
+        member = get_object_or_404(User, pk=kwargs["user_id"], practice=practice)
+        new_role = request.POST.get("role")
+        valid_roles = {value for value, _ in User.PracticeRole.choices}
+
+        if member == request.user:
+            messages.error(request, "You can't change your own role.")
+        elif new_role not in valid_roles:
+            messages.error(request, "That's not a valid role.")
+        elif not request.user.can_manage(member):
+            messages.error(request, "You don't have permission to change that person's role.")
+        elif not request.user.can_grant_role(new_role):
+            messages.error(request, "You can't grant a role higher than your own.")
+        else:
+            member.practice_role = new_role
+            member.save(update_fields=["practice_role"])
+            messages.success(request, f"Updated {member}'s role to {member.get_practice_role_display()}.")
         return redirect("pharmacy:practice-detail")

@@ -82,6 +82,7 @@ MIDDLEWARE = [
     "allauth.account.middleware.AccountMiddleware",
     'simple_history.middleware.HistoryRequestMiddleware',
     'pharmacy.middleware.PracticeRequiredMiddleware',
+    'pharmacy.middleware.PracticeRoleMiddleware',
 ]
 
 ROOT_URLCONF = 'swu_pharm.urls'
