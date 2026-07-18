@@ -49,7 +49,7 @@ EMAIL_HOST_USER = os.environ["EMAIL_HOST_USER"]
 EMAIL_HOST_PASSWORD = os.environ["EMAIL_HOST_PASSWORD"]
 DEFAULT_FROM_EMAIL = ''
 SERVER_EMAIL = ''
-'''
+
 
 LOGGING = {
     'version': 1,
@@ -69,6 +69,22 @@ LOGGING = {
         },
     },
 }
-
+'''
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+    },
+}
 logger = logging.getLogger(__name__)
 logging.getLogger().setLevel(logging.INFO)
