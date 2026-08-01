@@ -1,7 +1,11 @@
+import calendar
+from datetime import date
+
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.mail import send_mail
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
@@ -11,7 +15,6 @@ from django_tables2 import SingleTableMixin, SingleTableView
 
 from .filters import PrescriptionFilter
 from .forms import (
-    ClientBusinessFormSet,
     ClientForm,
     DoctorForm,
     MedicationForm,
@@ -21,9 +24,19 @@ from .forms import (
 )
 from .labels import generate_prescription_label
 from .models import Client, Doctor, Medication, Practice, PracticeInvite, Prescription
+from .pdf import render_prescription_label_pdf
 from .tables import ClientTable, DoctorTable, MedicationTable, PrescriptionTable
 
 PENDING_PRESCRIPTION_SESSION_KEY = "pending_prescription"
+
+
+def add_months(d, months):
+    '''Add `months` to date `d`, clamping the day if the target month is shorter.'''
+    month_index = d.month - 1 + months
+    year = d.year + month_index // 12
+    month = month_index % 12 + 1
+    day = min(d.day, calendar.monthrange(year, month)[1])
+    return date(year, month, day)
 
 
 class TrackedCreateView(LoginRequiredMixin, CreateView):
@@ -53,6 +66,11 @@ class PrescriptionListView(LoginRequiredMixin, SingleTableMixin, FilterView):
     paginate_by = 25
     extra_context = {"title": "Dispensed Prescriptions", "add_url": "pharmacy:prescription-add"}
 
+    def get_table(self, **kwargs):
+        table = super().get_table(**kwargs)
+        table.can_delete = self.request.user.is_practice_admin
+        return table
+
 
 class PrescriptionDetailView(LoginRequiredMixin, DetailView):
     model = Prescription
@@ -60,9 +78,16 @@ class PrescriptionDetailView(LoginRequiredMixin, DetailView):
 
 
 class PrescriptionPrintView(LoginRequiredMixin, DetailView):
+    '''Serves the label PDF, rendered fresh from current data every time
+    (not the stored snapshot -- see labels.generate_prescription_label).'''
     model = Prescription
-    template_name = "pharmacy/prescription_print.html"
     context_object_name = "prescription"
+
+    def render_to_response(self, context, **response_kwargs):
+        pdf_bytes = render_prescription_label_pdf(self.object)
+        response = HttpResponse(pdf_bytes, content_type="application/pdf")
+        response["Content-Disposition"] = f'inline; filename="prescription-{self.object.pk}-label.pdf"'
+        return response
 
 
 class PrescriptionCreateView(LoginRequiredMixin, CreateView):
@@ -70,7 +95,7 @@ class PrescriptionCreateView(LoginRequiredMixin, CreateView):
     instead of saving directly.'''
     model = Prescription
     form_class = PrescriptionForm
-    template_name = "pharmacy/form.html"
+    template_name = "pharmacy/prescription_form.html"
     extra_context = {
         "title": "New Prescription",
         "cancel_url": "pharmacy:prescription-list",
@@ -84,17 +109,28 @@ class PrescriptionCreateView(LoginRequiredMixin, CreateView):
 
     def get_initial(self):
         initial = super().get_initial()
+        today = timezone.now().date()
+        initial["date_of_prescription"] = today
+        initial["expiration_date"] = add_months(today, 6)
+        practice = self.request.user.practice
+        if practice and practice.default_doctor_id:
+            initial["doctor"] = practice.default_doctor_id
         initial.update(self.request.session.get(PENDING_PRESCRIPTION_SESSION_KEY) or {})
         return initial
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["practice"] = self.request.user.practice
+        return context
 
     def form_valid(self, form):
         self.request.session[PENDING_PRESCRIPTION_SESSION_KEY] = form.data.dict()
         return redirect("pharmacy:prescription-review")
 
 
-class PrescriptionReviewView(LoginRequiredMixin, TemplateView):
-    '''Step 2: show the label that will be generated; confirm to actually save.'''
-    template_name = "pharmacy/prescription_review.html"
+class PendingPrescriptionMixin:
+    '''Shared logic for reconstructing the not-yet-saved Prescription from
+    the session data stashed by PrescriptionCreateView.'''
 
     def _get_pending_form(self):
         pending = self.request.session.get(PENDING_PRESCRIPTION_SESSION_KEY)
@@ -103,11 +139,23 @@ class PrescriptionReviewView(LoginRequiredMixin, TemplateView):
         form = PrescriptionForm(data=pending)
         return form if form.is_valid() else None
 
-    def get(self, request, *args, **kwargs):
+    def _build_preview(self):
         form = self._get_pending_form()
         if form is None:
-            return redirect("pharmacy:prescription-add")
+            return None
         preview = Prescription(**form.cleaned_data)
+        preview.practice = self.request.user.practice
+        return preview
+
+
+class PrescriptionReviewView(LoginRequiredMixin, PendingPrescriptionMixin, TemplateView):
+    '''Step 2: show the label that will be generated; confirm to actually save.'''
+    template_name = "pharmacy/prescription_review.html"
+
+    def get(self, request, *args, **kwargs):
+        preview = self._build_preview()
+        if preview is None:
+            return redirect("pharmacy:prescription-add")
         return self.render_to_response({"preview": preview})
 
     def post(self, request, *args, **kwargs):
@@ -115,12 +163,27 @@ class PrescriptionReviewView(LoginRequiredMixin, TemplateView):
         if form is None:
             return redirect("pharmacy:prescription-add")
         prescription = form.save(commit=False)
+        prescription.practice = request.user.practice
         prescription.created_by = request.user
         prescription.updated_by = request.user
         prescription.save()
         generate_prescription_label(prescription)
         del request.session[PENDING_PRESCRIPTION_SESSION_KEY]
         return redirect("pharmacy:prescription-detail", pk=prescription.pk)
+
+
+class PrescriptionReviewLabelPDFView(LoginRequiredMixin, PendingPrescriptionMixin, View):
+    '''Live PDF preview of the label for the not-yet-saved prescription,
+    embedded in the review page.'''
+
+    def get(self, request, *args, **kwargs):
+        preview = self._build_preview()
+        if preview is None:
+            return redirect("pharmacy:prescription-add")
+        pdf_bytes = render_prescription_label_pdf(preview)
+        response = HttpResponse(pdf_bytes, content_type="application/pdf")
+        response["Content-Disposition"] = 'inline; filename="prescription-label-preview.pdf"'
+        return response
 
 
 class PrescriptionUpdateView(TrackedUpdateView):
@@ -150,7 +213,7 @@ class MedicationListView(LoginRequiredMixin, SingleTableView):
 class MedicationCreateView(TrackedCreateView):
     model = Medication
     form_class = MedicationForm
-    template_name = "pharmacy/form.html"
+    template_name = "pharmacy/medication_form.html"
     extra_context = {"title": "New Medication", "cancel_url": "pharmacy:medication-list"}
     success_url = reverse_lazy("pharmacy:medication-list")
 
@@ -158,7 +221,7 @@ class MedicationCreateView(TrackedCreateView):
 class MedicationUpdateView(TrackedUpdateView):
     model = Medication
     form_class = MedicationForm
-    template_name = "pharmacy/form.html"
+    template_name = "pharmacy/medication_form.html"
     extra_context = {"title": "Edit Medication", "cancel_url": "pharmacy:medication-list"}
     success_url = reverse_lazy("pharmacy:medication-list")
 
@@ -167,6 +230,16 @@ class MedicationDeleteView(TrackedDeleteView):
     model = Medication
     extra_context = {"cancel_url": "pharmacy:medication-list"}
     success_url = reverse_lazy("pharmacy:medication-list")
+
+
+class MedicationAutofillView(LoginRequiredMixin, View):
+    def get(self, request, pk, *args, **kwargs):
+        medication = get_object_or_404(Medication, pk=pk)
+        return JsonResponse({
+            "directions": medication.directions or "",
+            "milk_withhold_period": medication.milk_withhold_period or "",
+            "meat_withhold_period": medication.meat_withhold_period or "",
+        })
 
 
 # ---- Doctors ----
@@ -212,53 +285,27 @@ class ClientListView(LoginRequiredMixin, SingleTableView):
 
 
 class ClientCreateView(LoginRequiredMixin, CreateView):
-    '''Creates a Client together with its (required, at-least-one) businesses.'''
     model = Client
     form_class = ClientForm
-    template_name = "pharmacy/client_form.html"
+    template_name = "pharmacy/form.html"
     extra_context = {"title": "New Client", "cancel_url": "pharmacy:client-list"}
-
-    def get(self, request, *args, **kwargs):
-        self.object = None
-        form = self.get_form()
-        formset = ClientBusinessFormSet(instance=Client())
-        return self.render_to_response(self.get_context_data(form=form, formset=formset))
-
-    def post(self, request, *args, **kwargs):
-        self.object = None
-        new_client = Client()
-        form = ClientForm(request.POST, instance=new_client)
-        formset = ClientBusinessFormSet(request.POST, instance=new_client)
-        if form.is_valid() and formset.is_valid():
-            client = form.save()
-            formset.instance = client
-            formset.save()
-            return redirect("pharmacy:client-list")
-        return self.render_to_response(self.get_context_data(form=form, formset=formset))
+    success_url = reverse_lazy("pharmacy:client-list")
 
 
 class ClientUpdateView(LoginRequiredMixin, UpdateView):
-    '''Edits a Client together with its businesses.'''
     model = Client
     form_class = ClientForm
-    template_name = "pharmacy/client_form.html"
+    template_name = "pharmacy/form.html"
     extra_context = {"title": "Edit Client", "cancel_url": "pharmacy:client-list"}
+    success_url = reverse_lazy("pharmacy:client-list")
 
-    def get(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        form = self.get_form()
-        formset = ClientBusinessFormSet(instance=self.object)
-        return self.render_to_response(self.get_context_data(form=form, formset=formset))
 
-    def post(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        form = self.get_form()
-        formset = ClientBusinessFormSet(request.POST, instance=self.object)
-        if form.is_valid() and formset.is_valid():
-            form.save()
-            formset.save()
-            return redirect("pharmacy:client-list")
-        return self.render_to_response(self.get_context_data(form=form, formset=formset))
+class ClientAutofillView(LoginRequiredMixin, View):
+    def get(self, request, pk, *args, **kwargs):
+        client = get_object_or_404(Client, pk=pk)
+        last_prescription = Prescription.objects.filter(client=client).order_by("-date_of_prescription", "-created_at").first()
+        species = last_prescription.animal_species if last_prescription and last_prescription.animal_species else client.species
+        return JsonResponse({"species": species or ""})
 
 
 class ClientDeleteView(LoginRequiredMixin, DeleteView):

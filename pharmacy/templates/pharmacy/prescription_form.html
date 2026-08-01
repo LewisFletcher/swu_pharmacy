@@ -1,0 +1,124 @@
+{% extends "index.html" %}
+{% load pharmacy_extras %}
+
+{% block title %}{{ title }} - SWU Pharm{% endblock %}
+
+{% block head %}{{ form.media }}{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 sm:px-6 py-8">
+    <div class="card bg-base-100 border border-base-300 shadow-sm">
+        <div class="card-body">
+            <h1 class="card-title text-xl mb-1">{{ title }}</h1>
+            <p class="text-sm text-base-content/60 mb-4">{{ practice.name|default:"No practice on file" }}</p>
+            {% if form.non_field_errors %}
+            <div class="alert alert-error text-sm mb-4">{{ form.non_field_errors }}</div>
+            {% endif %}
+            <form method="post" class="space-y-1" id="prescription-form">
+                {% csrf_token %}
+                {% for field in form %}
+                <div class="form-control w-full mb-3">
+                    <label class="label" for="{{ field.id_for_label }}">
+                        <span class="label-text">{{ field.label }}{% if field.field.required %} <span class="text-error">*</span>{% endif %}</span>
+                    </label>
+                    {% if field|is_autocomplete %}
+                    <div class="block w-full [&_autocomplete-select]:block [&_autocomplete-select]:w-full [&_input]:input [&_input]:w-full [&_span[slot=deck]]:flex [&_span[slot=deck]]:flex-wrap [&_span[slot=deck]]:gap-1 [&_span[slot=deck]]:mt-2">
+                        {{ field }}
+                    </div>
+                    {% else %}
+                    {{ field }}
+                    {% endif %}
+                    {% if field.name == "medication" %}
+                    <div id="withhold-display" class="text-sm text-base-content/70 mt-2 hidden">
+                        <span class="badge badge-warning">Milk: <span id="withhold-milk"></span></span>
+                        <span class="badge badge-warning">Meat: <span id="withhold-meat"></span></span>
+                    </div>
+                    {% endif %}
+                    {% if field.help_text %}
+                    <span class="label"><span class="label-text-alt text-base-content/60">{{ field.help_text }}</span></span>
+                    {% endif %}
+                    {% for error in field.errors %}
+                    <span class="label"><span class="label-text-alt text-error">{{ error }}</span></span>
+                    {% endfor %}
+                </div>
+                {% endfor %}
+                <div class="flex gap-3 mt-6">
+                    <button type="submit" class="btn btn-primary">{{ submit_label|default:"Save" }}</button>
+                    {% if cancel_url %}
+                    <a href="{% url cancel_url %}" class="btn btn-ghost">Cancel</a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    function $(id) { return document.getElementById(id); }
+
+    function addMonths(date, months) {
+        var d = new Date(date.getTime());
+        var day = d.getDate();
+        d.setMonth(d.getMonth() + months);
+        if (d.getDate() !== day) { d.setDate(0); }
+        return d;
+    }
+
+    function toInputDate(d) {
+        var pad = function (n) { return String(n).padStart(2, "0"); };
+        return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+    }
+
+    var dateField = $("id_date_of_prescription");
+    var expirationField = $("id_expiration_date");
+    if (dateField && expirationField) {
+        dateField.addEventListener("change", function () {
+            if (!dateField.value) { return; }
+            if (expirationField.value) { return; }
+            expirationField.value = toInputDate(addMonths(new Date(dateField.value), 6));
+        });
+    }
+
+    var medicationSelect = $("id_medication");
+    var dosageField = $("id_dosage_instructions");
+    var withholdDisplay = $("withhold-display");
+    var withholdMilk = $("withhold-milk");
+    var withholdMeat = $("withhold-meat");
+    if (medicationSelect) {
+        medicationSelect.addEventListener("change", function () {
+            var medicationId = medicationSelect.value;
+            if (!medicationId) { return; }
+            fetch("/pharmacy/medications/" + medicationId + "/autofill/")
+                .then(function (resp) { return resp.json(); })
+                .then(function (data) {
+                    if (dosageField && !dosageField.value) {
+                        dosageField.value = data.directions || "";
+                    }
+                    if (withholdDisplay) {
+                        withholdMilk.textContent = data.milk_withhold_period || "N/A";
+                        withholdMeat.textContent = data.meat_withhold_period || "N/A";
+                        withholdDisplay.classList.remove("hidden");
+                    }
+                });
+        });
+    }
+
+    var clientSelect = $("id_client");
+    var speciesField = $("id_animal_species");
+    if (clientSelect) {
+        clientSelect.addEventListener("change", function () {
+            var clientId = clientSelect.value;
+            if (!clientId) { return; }
+            fetch("/pharmacy/clients/" + clientId + "/autofill/")
+                .then(function (resp) { return resp.json(); })
+                .then(function (data) {
+                    if (speciesField && !speciesField.value) {
+                        speciesField.value = data.species || "";
+                    }
+                });
+        });
+    }
+})();
+</script>
+{% endblock %}

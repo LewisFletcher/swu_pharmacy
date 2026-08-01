@@ -173,6 +173,10 @@ STATICFILES_DIRS = [
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
+MEDIA_URL = 'media/'
+
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 STORAGES = {
     "default": {
         "BACKEND": "storages.backends.s3.S3Storage",

@@ -47,6 +47,7 @@ class PracticeRequiredMiddleware:
 WRITE_VIEW_NAMES = {
     'pharmacy:prescription-add',
     'pharmacy:prescription-review',
+    'pharmacy:prescription-review-label-pdf',
     'pharmacy:prescription-edit',
     'pharmacy:prescription-delete',
     'pharmacy:medication-add',
@@ -67,6 +68,7 @@ WRITE_VIEW_NAMES = {
 # Of the views above, these are further restricted to admins only.
 ADMIN_ONLY_VIEW_NAMES = {
     'pharmacy:practice-edit',
+    'pharmacy:prescription-delete',
 }
 
 
@@ -90,7 +92,7 @@ class PracticeRoleMiddleware:
                     messages.error(request, "Viewers can't make changes.")
                     return redirect('landing')
                 if view_name in ADMIN_ONLY_VIEW_NAMES and not user.is_practice_admin:
-                    messages.error(request, "Only practice admins can edit the practice's info.")
-                    return redirect('pharmacy:practice-detail')
+                    messages.error(request, "Only practice admins can do that.")
+                    return redirect('landing')
 
         return self.get_response(request)

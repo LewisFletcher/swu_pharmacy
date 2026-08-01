@@ -1,9 +1,7 @@
-from dal_alight.widgets import ModelAlight, ModelAlightMultiple
+from dal_alight.widgets import ModelAlight
 from django import forms
-from django.forms import inlineformset_factory
-from django.forms.models import BaseInlineFormSet
 
-from .models import Address, Client, ClientBusiness, Doctor, Medication, Practice, PracticeInvite, Prescription
+from .models import Address, Client, Doctor, Medication, Practice, PracticeInvite, Prescription
 
 
 class DaisyFormMixin:
@@ -65,27 +63,23 @@ class NestedAddressFormMixin:
 class PrescriptionForm(DaisyFormMixin, forms.ModelForm):
     class Meta:
         model = Prescription
-        exclude = ('created_at', 'updated_at', 'created_by', 'updated_by', 'prescription_label')
+        exclude = (
+            'created_at', 'updated_at', 'created_by', 'updated_by', 'prescription_label',
+            'strength', 'animals_treated', 'route_of_administration', 'cautionary_notes', 'practice',
+        )
         widgets = {
             'date_of_prescription': forms.DateInput(attrs={'type': 'date'}),
             'expiration_date': forms.DateInput(attrs={'type': 'date'}),
             'medication': ModelAlight(url='pharmacy:medication-autocomplete'),
-            'strength': ModelAlight(url='pharmacy:strength-autocomplete'),
             'client': ModelAlight(url='pharmacy:client-autocomplete'),
             'doctor': ModelAlight(url='pharmacy:doctor-autocomplete'),
-            'practice': ModelAlight(url='pharmacy:practice-autocomplete'),
         }
 
 
 class MedicationForm(DaisyFormMixin, forms.ModelForm):
     class Meta:
         model = Medication
-        exclude = ('created_at', 'updated_at', 'created_by', 'updated_by')
-        widgets = {
-            'strength_options': ModelAlightMultiple(url='pharmacy:strength-autocomplete'),
-            'sizes': ModelAlightMultiple(url='pharmacy:size-autocomplete'),
-            'concentrations': ModelAlightMultiple(url='pharmacy:concentration-autocomplete'),
-        }
+        fields = ('drug_name', 'active_ingredient', 'directions', 'milk_withhold_period', 'meat_withhold_period', 'approved_age')
 
 
 class DoctorForm(DaisyFormMixin, NestedAddressFormMixin, forms.ModelForm):
@@ -97,75 +91,19 @@ class DoctorForm(DaisyFormMixin, NestedAddressFormMixin, forms.ModelForm):
         }
 
 
-class ClientForm(DaisyFormMixin, forms.ModelForm):
+class ClientForm(DaisyFormMixin, NestedAddressFormMixin, forms.ModelForm):
     class Meta:
         model = Client
-        fields = ('name', 'phone_number', 'email_address', 'species')
-
-
-class ClientBusinessForm(DaisyFormMixin, NestedAddressFormMixin, forms.ModelForm):
-    class Meta:
-        model = ClientBusiness
-        fields = ('name', 'phone_number', 'email', 'website')
-
-    def clean(self):
-        cleaned_data = super().clean()
-        if cleaned_data.get('DELETE'):
-            return cleaned_data
-        street = cleaned_data.get('address_street', '').strip()
-        client = getattr(self.instance, 'client', None)
-        if street and client and client.pk:
-            duplicate = ClientBusiness.objects.filter(
-                client=client,
-                address__street__iexact=street,
-                address__city__iexact=cleaned_data.get('address_city', '').strip(),
-                address__state__iexact=cleaned_data.get('address_state', '').strip(),
-                address__zip_code__iexact=cleaned_data.get('address_zip_code', '').strip(),
-            ).exclude(pk=self.instance.pk).exists()
-            if duplicate:
-                raise forms.ValidationError("This client already has a business at this address.")
-        return cleaned_data
-
-
-class BaseClientBusinessFormSet(BaseInlineFormSet):
-    '''Catches duplicate addresses entered across multiple business rows in
-    the same submission (the per-form clean only catches dupes already saved
-    in the database).'''
-
-    def clean(self):
-        super().clean()
-        seen = set()
-        for form in self.forms:
-            if not hasattr(form, 'cleaned_data') or form.cleaned_data.get('DELETE'):
-                continue
-            street = form.cleaned_data.get('address_street', '').strip().lower()
-            if not street:
-                continue
-            key = (
-                street,
-                form.cleaned_data.get('address_city', '').strip().lower(),
-                form.cleaned_data.get('address_state', '').strip().lower(),
-                form.cleaned_data.get('address_zip_code', '').strip().lower(),
-            )
-            if key in seen:
-                form.add_error('address_street', "You've entered this address for more than one business.")
-            seen.add(key)
-
-
-ClientBusinessFormSet = inlineformset_factory(
-    Client,
-    ClientBusiness,
-    form=ClientBusinessForm,
-    formset=BaseClientBusinessFormSet,
-    extra=1,
-    can_delete=True,
-)
+        fields = ('name', 'business_name', 'phone_number', 'email_address', 'species')
 
 
 class PracticeForm(DaisyFormMixin, NestedAddressFormMixin, forms.ModelForm):
     class Meta:
         model = Practice
         exclude = ('created_at', 'updated_at', 'created_by', 'updated_by', 'address')
+        widgets = {
+            'default_doctor': ModelAlight(url='pharmacy:doctor-autocomplete'),
+        }
 
 
 class PracticeInviteForm(DaisyFormMixin, forms.ModelForm):

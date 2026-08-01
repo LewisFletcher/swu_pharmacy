@@ -13,6 +13,20 @@ def actions_column(edit_url_name, delete_url_name):
     return tables.TemplateColumn(template, verbose_name="", orderable=False)
 
 
+def admin_gated_actions_column(edit_url_name, delete_url_name):
+    '''Like actions_column, but the Delete link only shows when the view has
+    set table.can_delete (see PrescriptionListView.get_table).'''
+    template = (
+        '<div class="flex gap-2 justify-end">'
+        f'<a href="{{% url "{edit_url_name}" record.pk %}}" class="btn btn-xs btn-outline">Edit</a>'
+        '{% if table.can_delete %}'
+        f'<a href="{{% url "{delete_url_name}" record.pk %}}" class="btn btn-xs btn-outline btn-error">Delete</a>'
+        '{% endif %}'
+        '</div>'
+    )
+    return tables.TemplateColumn(template, verbose_name="", orderable=False)
+
+
 class PrescriptionTable(tables.Table):
     date_of_prescription = tables.Column(verbose_name="Date")
     created_by = tables.Column(verbose_name="Created By")
@@ -21,7 +35,7 @@ class PrescriptionTable(tables.Table):
         '<a href="{% url "pharmacy:prescription-detail" record.pk %}" class="btn btn-xs btn-outline">View</a>',
         verbose_name="", orderable=False,
     )
-    actions = actions_column("pharmacy:prescription-edit", "pharmacy:prescription-delete")
+    actions = admin_gated_actions_column("pharmacy:prescription-edit", "pharmacy:prescription-delete")
 
     class Meta:
         model = Prescription
@@ -31,7 +45,6 @@ class PrescriptionTable(tables.Table):
             "client",
             "doctor",
             "quantity",
-            "animals_treated",
             "created_by",
             "created_at",
         )
@@ -44,7 +57,7 @@ class MedicationTable(tables.Table):
 
     class Meta:
         model = Medication
-        fields = ("brand_name", "drug_name", "active_ingredient")
+        fields = ("drug_name", "active_ingredient")
         sequence = fields + ("actions",)
 
 
@@ -62,5 +75,5 @@ class ClientTable(tables.Table):
 
     class Meta:
         model = Client
-        fields = ("name", "species", "phone_number", "email_address")
+        fields = ("name", "business_name", "species", "phone_number", "email_address")
         sequence = fields + ("actions",)

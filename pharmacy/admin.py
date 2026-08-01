@@ -62,8 +62,8 @@ class MedicationConcentrationAdmin(SimpleHistoryAdmin):
 
 @admin.register(Medication)
 class MedicationAdmin(SimpleHistoryAdmin):
-    list_display = ('brand_name', 'drug_name', 'active_ingredient')
-    search_fields = ('brand_name', 'drug_name', 'active_ingredient')
+    list_display = ('drug_name', 'active_ingredient')
+    search_fields = ('drug_name', 'active_ingredient')
     filter_horizontal = ('strength_options', 'sizes', 'concentrations')
 
 
@@ -93,7 +93,7 @@ class PrescriptionAdmin(SimpleHistoryAdmin):
         'created_at',
     )
     list_filter = ('date_of_prescription', 'doctor', 'created_by')
-    search_fields = ('client__name', 'medication__brand_name', 'medication__drug_name')
+    search_fields = ('client__name', 'medication__drug_name')
     date_hierarchy = 'date_of_prescription'
     autocomplete_fields = ('medication', 'client', 'doctor', 'practice', 'strength')
 

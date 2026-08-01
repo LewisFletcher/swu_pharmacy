@@ -9,16 +9,16 @@
     {% endif %}
     <hr>
     <p><strong>Client:</strong> {{ prescription.client.name|default:"—" }}</p>
-    <p><strong>Animal(s):</strong> {{ prescription.animals_treated }} {{ prescription.animal_species }}</p>
+    {% if prescription.animal_species %}<p><strong>Species:</strong> {{ prescription.animal_species }}</p>{% endif %}
     <p><strong>Date:</strong> {{ prescription.date_of_prescription }}</p>
     {% if prescription.expiration_date %}<p><strong>Expires:</strong> {{ prescription.expiration_date }}</p>{% endif %}
     <hr>
-    <p><strong>{{ prescription.medication.brand_name|default:"—" }}</strong> ({{ prescription.medication.drug_name }})</p>
+    <p><strong>{{ prescription.medication.drug_name|default:"—" }}</strong></p>
     <p>Active Ingredient: {{ prescription.medication.active_ingredient }}</p>
     {% if prescription.strength %}<p>Strength: {{ prescription.strength }}</p>{% endif %}
     <p>Quantity: {{ prescription.quantity }}</p>
     <p><strong>Directions:</strong> {{ prescription.dosage_instructions|default:"—" }}</p>
-    <p>Route: {{ prescription.route_of_administration|default:"—" }} &middot; Duration: {{ prescription.duration|default:"—" }}</p>
+    {% if prescription.duration %}<p>Duration: {{ prescription.duration }}</p>{% endif %}
     <p>Refills: {{ prescription.number_of_refills }}</p>
     {% if prescription.cautionary_notes %}<p><strong>Caution:</strong> {{ prescription.cautionary_notes }}</p>{% endif %}
     {% if prescription.medication.milk_withhold_period or prescription.medication.meat_withhold_period %}

@@ -2,7 +2,7 @@ import django_filters
 from django import forms
 
 from accounts.models import User
-from .models import Client, Doctor, Prescription
+from .models import Client, Doctor, Medication, Prescription
 
 DAISY_INPUT = {"class": "input w-full"}
 DAISY_SELECT = {"class": "select w-full"}
@@ -26,7 +26,10 @@ class PrescriptionFilter(django_filters.FilterSet):
     client = django_filters.ModelChoiceFilter(
         queryset=Client.objects.all(), widget=forms.Select(attrs=DAISY_SELECT),
     )
+    medication = django_filters.ModelChoiceFilter(
+        queryset=Medication.objects.all(), widget=forms.Select(attrs=DAISY_SELECT),
+    )
 
     class Meta:
         model = Prescription
-        fields = ["date_from", "date_to", "created_by", "doctor", "client"]
+        fields = ["date_from", "date_to", "created_by", "doctor", "client", "medication"]

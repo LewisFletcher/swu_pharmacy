@@ -1,0 +1,65 @@
+{% extends "index.html" %}
+
+{% block title %}{{ title }} - SWU Pharm{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 sm:px-6 py-8">
+    <div class="card bg-base-100 border border-base-300 shadow-sm">
+        <div class="card-body">
+            <h1 class="card-title text-xl mb-4">{{ title }}</h1>
+            {% if form.non_field_errors %}
+            <div class="alert alert-error text-sm mb-4">{{ form.non_field_errors }}</div>
+            {% endif %}
+            <form method="post" class="space-y-1">
+                {% csrf_token %}
+                {% for field in form %}
+                <div class="form-control w-full mb-3">
+                    <label class="label" for="{{ field.id_for_label }}">
+                        <span class="label-text">{{ field.label }}{% if field.field.required %} <span class="text-error">*</span>{% endif %}</span>
+                    </label>
+                    {{ field }}
+                    {% if field.name == "directions" %}
+                    <span class="label">
+                        <span class="label-text-alt" id="directions-word-count">0 words</span>
+                    </span>
+                    {% endif %}
+                    {% if field.help_text %}
+                    <span class="label"><span class="label-text-alt text-base-content/60">{{ field.help_text }}</span></span>
+                    {% endif %}
+                    {% for error in field.errors %}
+                    <span class="label"><span class="label-text-alt text-error">{{ error }}</span></span>
+                    {% endfor %}
+                </div>
+                {% endfor %}
+                <div class="flex gap-3 mt-6">
+                    <button type="submit" class="btn btn-primary">{{ submit_label|default:"Save" }}</button>
+                    {% if cancel_url %}
+                    <a href="{% url cancel_url %}" class="btn btn-ghost">Cancel</a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    var directionsField = document.getElementById("id_directions");
+    var counter = document.getElementById("directions-word-count");
+    if (!directionsField || !counter) { return; }
+
+    var WARN_AT = 100;
+
+    function update() {
+        var text = directionsField.value.trim();
+        var words = text ? text.split(/\s+/).length : 0;
+        counter.textContent = words + " word" + (words === 1 ? "" : "s");
+        counter.classList.toggle("text-warning", words > WARN_AT);
+        counter.classList.toggle("text-base-content/60", words <= WARN_AT);
+    }
+
+    directionsField.addEventListener("input", update);
+    update();
+})();
+</script>
+{% endblock %}

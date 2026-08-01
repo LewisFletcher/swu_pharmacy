@@ -60,6 +60,8 @@ class Client(models.Model):
         ('Other', 'Other'),
     ]
     species = models.CharField(max_length=20, choices=species_choices, blank=True, null=True)
+    business_name = models.CharField(max_length=100, blank=True, null=True)
+    address = models.ForeignKey(Address, on_delete=models.SET_NULL, null=True, blank=True, related_name='clients')
 
     class Meta:
         ordering = ['name']
@@ -125,15 +127,18 @@ class Medication(TrackerModel):
     history = HistoricalRecords()
 
     class Meta:
-        ordering = ['brand_name']
+        ordering = ['drug_name']
 
     def __str__(self):
-        return f"{self.brand_name} ({self.drug_name})"
+        return f"{self.drug_name} ({self.active_ingredient})"
 
 class Practice(TrackerModel):
     '''Model containing practice/clinic information.'''
     name = models.CharField(max_length=100)
     address = models.ForeignKey(Address, on_delete=models.SET_NULL, null=True, blank=True)
+    default_doctor = models.ForeignKey(
+        'Doctor', on_delete=models.SET_NULL, null=True, blank=True, related_name='default_for_practices'
+    )
     phone_number = models.CharField(max_length=20, blank=True, null=True)
     email = models.EmailField(blank=True, null=True)
     website = models.URLField(blank=True, null=True)
@@ -172,10 +177,10 @@ class Prescription(TrackerModel):
     client = models.ForeignKey(Client, on_delete=models.CASCADE)
     doctor = models.ForeignKey(Doctor, on_delete=models.SET_NULL, null=True, blank=True)
     practice = models.ForeignKey(Practice, on_delete=models.SET_NULL, null=True, blank=True)
-    animals_treated = models.PositiveIntegerField(help_text='Number of animals treated with this prescription.')
+    animals_treated = models.PositiveIntegerField(null=True, blank=True, help_text='Number of animals treated with this prescription.')
     animal_species = models.CharField(max_length=50, blank=True, null=True)
     dosage_instructions = models.TextField(blank=True, null=True)
-    duration = models.CharField(max_length=100, blank=True, null=True, help_text='Duration of treatment (e.g., 5 days, 2 weeks).')
+    duration = models.CharField(max_length=100, blank=True, null=True, help_text='How long to give this medication (e.g., 5 days, 2 weeks).')
     expiration_date = models.DateField(blank=True, null=True, help_text='Expiration date of the prescription.')
     route_of_administration = models.CharField(max_length=100, blank=True, null=True, help_text='Route of administration (e.g., oral, injection).')
     number_of_refills = models.PositiveIntegerField(default=0, help_text='Number of refills allowed for this prescription.')
@@ -187,4 +192,4 @@ class Prescription(TrackerModel):
         ordering = ['-date_of_prescription', '-created_at']
 
     def __str__(self):
-        return f"Prescription for {self.client.name} - {self.medication.brand_name} ({self.date_of_prescription})"
+        return f"Prescription for {self.client.name} - {self.medication.drug_name} ({self.date_of_prescription})"

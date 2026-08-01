@@ -10,14 +10,12 @@ urlpatterns = [
     path("autocomplete/doctor/", autocompletes.DoctorAutocomplete.as_view(), name="doctor-autocomplete"),
     path("autocomplete/medication/", autocompletes.MedicationAutocomplete.as_view(), name="medication-autocomplete"),
     path("autocomplete/practice/", autocompletes.PracticeAutocomplete.as_view(), name="practice-autocomplete"),
-    path("autocomplete/strength/", autocompletes.MedicationStrengthAutocomplete.as_view(), name="strength-autocomplete"),
-    path("autocomplete/size/", autocompletes.MedicationSizeAutocomplete.as_view(), name="size-autocomplete"),
-    path("autocomplete/concentration/", autocompletes.MedicationConcentrationAutocomplete.as_view(), name="concentration-autocomplete"),
 
     # Prescriptions
     path("prescriptions/", views.PrescriptionListView.as_view(), name="prescription-list"),
     path("prescriptions/add/", views.PrescriptionCreateView.as_view(), name="prescription-add"),
     path("prescriptions/add/review/", views.PrescriptionReviewView.as_view(), name="prescription-review"),
+    path("prescriptions/add/review/label.pdf", views.PrescriptionReviewLabelPDFView.as_view(), name="prescription-review-label-pdf"),
     path("prescriptions/<int:pk>/", views.PrescriptionDetailView.as_view(), name="prescription-detail"),
     path("prescriptions/<int:pk>/print/", views.PrescriptionPrintView.as_view(), name="prescription-print"),
     path("prescriptions/<int:pk>/edit/", views.PrescriptionUpdateView.as_view(), name="prescription-edit"),
@@ -28,6 +26,7 @@ urlpatterns = [
     path("medications/add/", views.MedicationCreateView.as_view(), name="medication-add"),
     path("medications/<int:pk>/edit/", views.MedicationUpdateView.as_view(), name="medication-edit"),
     path("medications/<int:pk>/delete/", views.MedicationDeleteView.as_view(), name="medication-delete"),
+    path("medications/<int:pk>/autofill/", views.MedicationAutofillView.as_view(), name="medication-autofill"),
 
     # Doctors
     path("doctors/", views.DoctorListView.as_view(), name="doctor-list"),
@@ -40,6 +39,7 @@ urlpatterns = [
     path("clients/add/", views.ClientCreateView.as_view(), name="client-add"),
     path("clients/<int:pk>/edit/", views.ClientUpdateView.as_view(), name="client-edit"),
     path("clients/<int:pk>/delete/", views.ClientDeleteView.as_view(), name="client-delete"),
+    path("clients/<int:pk>/autofill/", views.ClientAutofillView.as_view(), name="client-autofill"),
 
     # Practice (gate destination, staff management, invites)
     path("practice/setup/", views.PracticeSetupView.as_view(), name="practice-setup"),

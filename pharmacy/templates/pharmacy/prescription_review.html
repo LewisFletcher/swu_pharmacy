@@ -13,6 +13,11 @@
         </div>
     </div>
 
+    <div class="mt-6">
+        <h2 class="text-sm font-semibold text-base-content/60 uppercase tracking-wide mb-2">Label Preview (PDF)</h2>
+        <iframe src="{% url 'pharmacy:prescription-review-label-pdf' %}" class="w-full border border-base-300 rounded-box" style="height: 320px;" title="Label preview"></iframe>
+    </div>
+
     <div class="flex gap-3 mt-6">
         <a href="{% url 'pharmacy:prescription-add' %}?edit=1" class="btn btn-outline">Make Edits</a>
         <form method="post">
