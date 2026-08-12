@@ -22,11 +22,6 @@ INTERNAL_IPS = [
 
 NPM_BIN_PATH = 'C:\\Program Files\\nodejs\\npm.cmd'
 
-# Prod uses S3 (see base.py), but that requires django-storages plus real
-# bucket credentials that aren't configured anywhere yet. Use local disk
-# for dev so file uploads (e.g. prescription labels) actually work.
-STORAGES['default'] = {'BACKEND': 'django.core.files.storage.FileSystemStorage'}
-
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 LOGGING = {

@@ -9,6 +9,12 @@
     {% endif %}
     <hr>
     <p><strong>Client:</strong> {{ prescription.client.name|default:"—" }}</p>
+    {% if prescription.client_business %}<p>{{ prescription.client_business.name }}</p>{% endif %}
+    {% if prescription.client_business.address %}
+    <p>{{ prescription.client_business.address }}</p>
+    {% elif prescription.client.address %}
+    <p>{{ prescription.client.address }}</p>
+    {% endif %}
     {% if prescription.animal_species %}<p><strong>Species:</strong> {{ prescription.animal_species }}</p>{% endif %}
     <p><strong>Date:</strong> {{ prescription.date_of_prescription }}</p>
     {% if prescription.expiration_date %}<p><strong>Expires:</strong> {{ prescription.expiration_date }}</p>{% endif %}

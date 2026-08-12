@@ -15,6 +15,7 @@ from django_tables2 import SingleTableMixin, SingleTableView
 
 from .filters import PrescriptionFilter
 from .forms import (
+    ClientBusinessForm,
     ClientForm,
     DoctorForm,
     MedicationForm,
@@ -22,8 +23,7 @@ from .forms import (
     PracticeInviteForm,
     PrescriptionForm,
 )
-from .labels import generate_prescription_label
-from .models import Client, Doctor, Medication, Practice, PracticeInvite, Prescription
+from .models import Client, ClientBusiness, Doctor, Medication, Practice, PracticeInvite, Prescription
 from .pdf import render_prescription_label_pdf
 from .tables import ClientTable, DoctorTable, MedicationTable, PrescriptionTable
 
@@ -78,8 +78,7 @@ class PrescriptionDetailView(LoginRequiredMixin, DetailView):
 
 
 class PrescriptionPrintView(LoginRequiredMixin, DetailView):
-    '''Serves the label PDF, rendered fresh from current data every time
-    (not the stored snapshot -- see labels.generate_prescription_label).'''
+    '''Serves the label PDF, rendered fresh from current data every time.'''
     model = Prescription
     context_object_name = "prescription"
 
@@ -143,7 +142,10 @@ class PendingPrescriptionMixin:
         form = self._get_pending_form()
         if form is None:
             return None
-        preview = Prescription(**form.cleaned_data)
+        data = {k: v for k, v in form.cleaned_data.items() if k != 'client_selection'}
+        preview = Prescription(**data)
+        preview.client = form._resolved_client
+        preview.client_business = form._resolved_client_business
         preview.practice = self.request.user.practice
         return preview
 
@@ -167,7 +169,6 @@ class PrescriptionReviewView(LoginRequiredMixin, PendingPrescriptionMixin, Templ
         prescription.created_by = request.user
         prescription.updated_by = request.user
         prescription.save()
-        generate_prescription_label(prescription)
         del request.session[PENDING_PRESCRIPTION_SESSION_KEY]
         return redirect("pharmacy:prescription-detail", pk=prescription.pk)
 
@@ -300,9 +301,92 @@ class ClientUpdateView(LoginRequiredMixin, UpdateView):
     success_url = reverse_lazy("pharmacy:client-list")
 
 
-class ClientAutofillView(LoginRequiredMixin, View):
-    def get(self, request, pk, *args, **kwargs):
-        client = get_object_or_404(Client, pk=pk)
+class ClientDetailView(LoginRequiredMixin, DetailView):
+    model = Client
+    template_name = "pharmacy/client_detail.html"
+    context_object_name = "client"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["businesses"] = self.object.businesses.select_related("address").order_by("name")
+        return context
+
+
+class ClientBusinessCreateView(LoginRequiredMixin, CreateView):
+    model = ClientBusiness
+    form_class = ClientBusinessForm
+    template_name = "pharmacy/form.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        self.client = get_object_or_404(Client, pk=kwargs["client_pk"])
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["client"] = self.client
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = f"Add Business for {self.client.name}"
+        context["cancel_href"] = reverse("pharmacy:client-detail", kwargs={"pk": self.client.pk})
+        return context
+
+    def form_valid(self, form):
+        form.instance.client = self.client
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse("pharmacy:client-detail", kwargs={"pk": self.client.pk})
+
+
+class ClientBusinessUpdateView(LoginRequiredMixin, UpdateView):
+    model = ClientBusiness
+    form_class = ClientBusinessForm
+    template_name = "pharmacy/form.html"
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["client"] = self.object.client
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = f"Edit Business — {self.object.name}"
+        context["cancel_href"] = reverse("pharmacy:client-detail", kwargs={"pk": self.object.client_id})
+        return context
+
+    def get_success_url(self):
+        return reverse("pharmacy:client-detail", kwargs={"pk": self.object.client_id})
+
+
+class ClientBusinessDeleteView(LoginRequiredMixin, DeleteView):
+    model = ClientBusiness
+    template_name = "pharmacy/confirm_delete.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["cancel_href"] = reverse("pharmacy:client-detail", kwargs={"pk": self.object.client_id})
+        return context
+
+    def get_success_url(self):
+        return reverse("pharmacy:client-detail", kwargs={"pk": self.object.client_id})
+
+
+class ClientSelectionAutofillView(LoginRequiredMixin, View):
+    '''Resolves a "c-<id>"/"b-<id>" client_selection value (see
+    forms.PrescriptionForm and autocompletes.ClientBusinessAutocomplete) to
+    the underlying client's default species for the prescription form.'''
+
+    def get(self, request, *args, **kwargs):
+        kind, _, raw_id = request.GET.get("selection", "").partition("-")
+        if kind == "b":
+            business = get_object_or_404(ClientBusiness, pk=raw_id)
+            client = business.client
+        elif kind == "c":
+            client = get_object_or_404(Client, pk=raw_id)
+        else:
+            return JsonResponse({"species": ""})
         last_prescription = Prescription.objects.filter(client=client).order_by("-date_of_prescription", "-created_at").first()
         species = last_prescription.animal_species if last_prescription and last_prescription.animal_species else client.species
         return JsonResponse({"species": species or ""})

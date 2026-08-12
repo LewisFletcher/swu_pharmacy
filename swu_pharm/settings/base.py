@@ -173,13 +173,13 @@ STATICFILES_DIRS = [
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-MEDIA_URL = 'media/'
-
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
+# Nothing in the app uses FileFields (prescription labels are rendered fresh
+# on every request instead of stored -- see pharmacy/pdf.py), so "default"
+# just needs to be a valid, credential-free backend to satisfy Django's
+# STORAGES setting.
 STORAGES = {
     "default": {
-        "BACKEND": "storages.backends.s3.S3Storage",
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
     },
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",

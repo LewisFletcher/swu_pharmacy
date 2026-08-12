@@ -82,12 +82,6 @@
                     <dd class="text-base-content">{{ object.medication.meat_withhold_period|default:"—" }}</dd>
                 </div>
                 {% endif %}
-                {% if object.prescription_label %}
-                <div class="sm:col-span-2">
-                    <dt class="text-xs uppercase text-base-content/50">Label</dt>
-                    <dd><a href="{{ object.prescription_label.url }}" class="link link-primary">Download label</a></dd>
-                </div>
-                {% endif %}
             </dl>
 
             <div class="border-t border-base-300 mt-6 pt-4 text-xs text-base-content/50">

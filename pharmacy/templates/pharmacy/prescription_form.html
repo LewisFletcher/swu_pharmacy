@@ -104,13 +104,13 @@
         });
     }
 
-    var clientSelect = $("id_client");
+    var clientSelect = $("id_client_selection");
     var speciesField = $("id_animal_species");
     if (clientSelect) {
         clientSelect.addEventListener("change", function () {
-            var clientId = clientSelect.value;
-            if (!clientId) { return; }
-            fetch("/pharmacy/clients/" + clientId + "/autofill/")
+            var selection = clientSelect.value;
+            if (!selection) { return; }
+            fetch("/pharmacy/clients/selection-autofill/?selection=" + encodeURIComponent(selection))
                 .then(function (resp) { return resp.json(); })
                 .then(function (data) {
                     if (speciesField && !speciesField.value) {

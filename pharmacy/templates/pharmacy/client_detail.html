@@ -1,0 +1,60 @@
+{% extends "index.html" %}
+
+{% block title %}{{ client.name }} - SWU Pharm{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-8">
+    <div class="flex items-start justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-semibold text-base-content">{{ client.name }}</h1>
+            <p class="text-base-content/60">
+                {{ client.species|default:"—" }}
+                {% if client.phone_number %} &middot; {{ client.phone_number }}{% endif %}
+                {% if client.email_address %} &middot; {{ client.email_address }}{% endif %}
+            </p>
+            <p class="text-base-content/60">{{ client.address|default:"No address on file" }}</p>
+        </div>
+        <a href="{% url 'pharmacy:client-edit' client.pk %}" class="btn btn-outline shrink-0">Edit Client</a>
+    </div>
+
+    <div>
+        <div class="flex items-center justify-between mb-3">
+            <h2 class="text-sm font-semibold text-base-content/60 uppercase tracking-wide">Businesses</h2>
+            <a href="{% url 'pharmacy:client-business-add' client.pk %}" class="btn btn-sm btn-outline">+ Add Business</a>
+        </div>
+        <div class="border border-base-300 rounded-box overflow-hidden bg-base-100">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Address</th>
+                        <th>Phone</th>
+                        <th>Email</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for business in businesses %}
+                    <tr class="hover">
+                        <td>{{ business.name }}</td>
+                        <td>{{ business.address|default:"—" }}</td>
+                        <td>{{ business.phone_number|default:"—" }}</td>
+                        <td>{{ business.email|default:"—" }}</td>
+                        <td class="text-right">
+                            <div class="flex gap-2 justify-end">
+                                <a href="{% url 'pharmacy:client-business-edit' business.pk %}" class="btn btn-xs btn-outline">Edit</a>
+                                <a href="{% url 'pharmacy:client-business-delete' business.pk %}" class="btn btn-xs btn-outline btn-error">Delete</a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center py-8 text-base-content/60">No businesses on file.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

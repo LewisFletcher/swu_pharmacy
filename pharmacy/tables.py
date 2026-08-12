@@ -1,4 +1,7 @@
+from datetime import date
+
 import django_tables2 as tables
+from django.utils.html import format_html
 
 from .models import Client, Doctor, Medication, Prescription
 
@@ -62,6 +65,7 @@ class MedicationTable(tables.Table):
 
 
 class DoctorTable(tables.Table):
+    license_expiration_date = tables.Column(verbose_name="License Expires")
     actions = actions_column("pharmacy:doctor-edit", "pharmacy:doctor-delete")
 
     class Meta:
@@ -69,11 +73,25 @@ class DoctorTable(tables.Table):
         fields = ("name", "license_number", "license_expiration_date", "phone_number")
         sequence = fields + ("actions",)
 
+    def render_license_expiration_date(self, value):
+        days_left = (value - date.today()).days
+        if days_left < 0:
+            badge_class, label = "badge-error", f"{value} (expired)"
+        elif days_left <= 30:
+            badge_class, label = "badge-warning", f"{value} ({days_left}d)"
+        else:
+            return value
+        return format_html('<span class="badge {}">{}</span>', badge_class, label)
+
 
 class ClientTable(tables.Table):
+    detail = tables.TemplateColumn(
+        '<a href="{% url "pharmacy:client-detail" record.pk %}" class="btn btn-xs btn-outline">View</a>',
+        verbose_name="", orderable=False,
+    )
     actions = actions_column("pharmacy:client-edit", "pharmacy:client-delete")
 
     class Meta:
         model = Client
-        fields = ("name", "business_name", "species", "phone_number", "email_address")
-        sequence = fields + ("actions",)
+        fields = ("name", "species", "phone_number", "email_address")
+        sequence = fields + ("detail", "actions")

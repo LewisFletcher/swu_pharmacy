@@ -37,7 +37,9 @@
                 {% endfor %}
                 <div class="flex gap-3 mt-6">
                     <button type="submit" class="btn btn-primary">{{ submit_label|default:"Save" }}</button>
-                    {% if cancel_url %}
+                    {% if cancel_href %}
+                    <a href="{{ cancel_href }}" class="btn btn-ghost">Cancel</a>
+                    {% elif cancel_url %}
                     <a href="{% url cancel_url %}" class="btn btn-ghost">Cancel</a>
                     {% endif %}
                 </div>

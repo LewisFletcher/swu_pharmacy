@@ -7,6 +7,7 @@ app_name = "pharmacy"
 urlpatterns = [
     # Autocompletes
     path("autocomplete/client/", autocompletes.ClientAutocomplete.as_view(), name="client-autocomplete"),
+    path("autocomplete/client-business/", autocompletes.ClientBusinessAutocomplete.as_view(), name="client-business-autocomplete"),
     path("autocomplete/doctor/", autocompletes.DoctorAutocomplete.as_view(), name="doctor-autocomplete"),
     path("autocomplete/medication/", autocompletes.MedicationAutocomplete.as_view(), name="medication-autocomplete"),
     path("autocomplete/practice/", autocompletes.PracticeAutocomplete.as_view(), name="practice-autocomplete"),
@@ -37,9 +38,13 @@ urlpatterns = [
     # Clients
     path("clients/", views.ClientListView.as_view(), name="client-list"),
     path("clients/add/", views.ClientCreateView.as_view(), name="client-add"),
+    path("clients/<int:pk>/", views.ClientDetailView.as_view(), name="client-detail"),
     path("clients/<int:pk>/edit/", views.ClientUpdateView.as_view(), name="client-edit"),
     path("clients/<int:pk>/delete/", views.ClientDeleteView.as_view(), name="client-delete"),
-    path("clients/<int:pk>/autofill/", views.ClientAutofillView.as_view(), name="client-autofill"),
+    path("clients/selection-autofill/", views.ClientSelectionAutofillView.as_view(), name="client-selection-autofill"),
+    path("clients/<int:client_pk>/businesses/add/", views.ClientBusinessCreateView.as_view(), name="client-business-add"),
+    path("clients/businesses/<int:pk>/edit/", views.ClientBusinessUpdateView.as_view(), name="client-business-edit"),
+    path("clients/businesses/<int:pk>/delete/", views.ClientBusinessDeleteView.as_view(), name="client-business-delete"),
 
     # Practice (gate destination, staff management, invites)
     path("practice/setup/", views.PracticeSetupView.as_view(), name="practice-setup"),

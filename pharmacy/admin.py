@@ -95,7 +95,7 @@ class PrescriptionAdmin(SimpleHistoryAdmin):
     list_filter = ('date_of_prescription', 'doctor', 'created_by')
     search_fields = ('client__name', 'medication__drug_name')
     date_hierarchy = 'date_of_prescription'
-    autocomplete_fields = ('medication', 'client', 'doctor', 'practice', 'strength')
+    autocomplete_fields = ('medication', 'client', 'client_business', 'doctor', 'practice', 'strength')
 
 
 admin.site.site_header = "SWU Pharm Admin"

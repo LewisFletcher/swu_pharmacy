@@ -11,7 +11,7 @@
             <form method="post" class="mt-4 flex gap-3">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-error">Delete</button>
-                <a href="{% url cancel_url %}" class="btn btn-ghost">Cancel</a>
+                <a href="{% if cancel_href %}{{ cancel_href }}{% else %}{% url cancel_url %}{% endif %}" class="btn btn-ghost">Cancel</a>
             </form>
         </div>
     </div>

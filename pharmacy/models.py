@@ -60,7 +60,6 @@ class Client(models.Model):
         ('Other', 'Other'),
     ]
     species = models.CharField(max_length=20, choices=species_choices, blank=True, null=True)
-    business_name = models.CharField(max_length=100, blank=True, null=True)
     address = models.ForeignKey(Address, on_delete=models.SET_NULL, null=True, blank=True, related_name='clients')
 
     class Meta:
@@ -175,6 +174,10 @@ class Prescription(TrackerModel):
     quantity = models.PositiveIntegerField()
     strength = models.ForeignKey(MedicationStrength, on_delete=models.SET_NULL, null=True, blank=True)
     client = models.ForeignKey(Client, on_delete=models.CASCADE)
+    client_business = models.ForeignKey(
+        ClientBusiness, on_delete=models.SET_NULL, null=True, blank=True, related_name='prescriptions',
+        help_text="Which of the client's business locations this prescription is for, if any.",
+    )
     doctor = models.ForeignKey(Doctor, on_delete=models.SET_NULL, null=True, blank=True)
     practice = models.ForeignKey(Practice, on_delete=models.SET_NULL, null=True, blank=True)
     animals_treated = models.PositiveIntegerField(null=True, blank=True, help_text='Number of animals treated with this prescription.')
@@ -185,7 +188,6 @@ class Prescription(TrackerModel):
     route_of_administration = models.CharField(max_length=100, blank=True, null=True, help_text='Route of administration (e.g., oral, injection).')
     number_of_refills = models.PositiveIntegerField(default=0, help_text='Number of refills allowed for this prescription.')
     cautionary_notes = models.TextField(blank=True, null=True, help_text='Any cautionary notes or warnings related to the prescription.')
-    prescription_label = models.FileField(upload_to='prescription_labels/', blank=True, null=True, help_text='The label that will be printed and attached to the prescription container.')
     history = HistoricalRecords()
 
     class Meta:
