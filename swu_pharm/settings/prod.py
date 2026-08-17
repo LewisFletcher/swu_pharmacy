@@ -12,7 +12,7 @@ MIDDLEWARE += [
     "whitenoise.middleware.WhiteNoiseMiddleware",
 ]
 
-ALLOWED_HOSTS = ['swupharmacy-production.up.railway.app']
+ALLOWED_HOSTS = ['swupharmacy-production.up.railway.app', 'www.swingingudder.com', 'swingingudder.com']
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
@@ -38,7 +38,7 @@ ADMINS = [
     ('Lewis Fletcher', 'lew.fletcher3@gmail.com'),
 ]
 
-CSRF_TRUSTED_ORIGINS = ['https://swupharmacy-production.up.railway.app']
+CSRF_TRUSTED_ORIGINS = ['https://swupharmacy-production.up.railway.app', 'https://www.swingingudder.com', 'https://swingingudder.com']
 '''
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = ''

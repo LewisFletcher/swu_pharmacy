@@ -128,6 +128,11 @@ DATABASES = {
     }
 }
 
+GMAIL_SENDER = os.environ['GMAIL_SENDER']
+GMAIL_SERVICE_ACCOUNT_KEY_B64 = os.environ['GMAIL_SERVICE_ACCOUNT_KEY_B64']
+
+EMAIL_BACKEND = 'swu_pharm.email_backend.GmailAPIBackend'
+DEFAULT_FROM_EMAIL = os.environ.get('GMAIL_SENDER')
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
