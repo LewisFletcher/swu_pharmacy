@@ -570,6 +570,23 @@ Django = ">=5.2"
 drf = ["djangorestframework"]
 
 [[package]]
+name = "django-recaptcha"
+version = "4.1.0"
+description = "Django recaptcha form field/widget app."
+optional = false
+python-versions = "*"
+files = [
+    {file = "django_recaptcha-4.1.0-py3-none-any.whl", hash = "sha256:463aa65967e973de466b28ce8e8b6abb2faffb1ce0c7faa1bf0e5b041e0497cb"},
+    {file = "django_recaptcha-4.1.0.tar.gz", hash = "sha256:73097b958733f65b729d4e4630c51fc2bf147aca6f026017d18898dfc25cb4c5"},
+]
+
+[package.dependencies]
+django = "*"
+
+[package.extras]
+testing = ["coveralls", "tox", "tox-gh-actions"]
+
+[[package]]
 name = "django-simple-history"
 version = "3.12.0"
 description = "Store model history and view/revert changes from admin site."
@@ -1561,4 +1578,4 @@ brotli = ["brotli"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "a2288ae32de262e32c4098a58756272d8590f35ee837706bec73504d69f95917"
+content-hash = "2eb3741c448a91ae4acc82c4ba5cee77d21ee4980c75fdd6cb3b657367f70ad2"

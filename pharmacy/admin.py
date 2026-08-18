@@ -98,6 +98,6 @@ class PrescriptionAdmin(SimpleHistoryAdmin):
     autocomplete_fields = ('medication', 'client', 'client_business', 'doctor', 'practice', 'strength')
 
 
-admin.site.site_header = "SWU Pharm Admin"
-admin.site.site_title = "SWU Pharm Admin"
+admin.site.site_header = "Swinging Udder Veterinary Services Admin"
+admin.site.site_title = "Swinging Udder Veterinary Services Admin"
 admin.site.index_title = "Administration"

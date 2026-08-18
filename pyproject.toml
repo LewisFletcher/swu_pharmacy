@@ -26,6 +26,7 @@ reportlab = "^5.0.0"
 openpyxl = "^3.1.5"
 google-auth = "^2.56.3"
 google-api-python-client = "^2.198.0"
+django-recaptcha = "^4.1.0"
 
 
 [build-system]

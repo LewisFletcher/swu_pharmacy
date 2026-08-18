@@ -86,22 +86,20 @@ def render_prescription_label_pdf(prescription):
     if header_bits:
         draw_line(" • ".join(header_bits), font=FONT_BOLD, size=8)
 
-    # --- Client + species ---
-    client_bits = [prescription.client.name if prescription.client else "—"]
+    # --- Client (business name first, if this prescription is tied to one) + species ---
+    business = prescription.client_business
+    client_name = prescription.client.name if prescription.client else "—"
+    client_bits = [f"{business.name} — {client_name}" if business else client_name]
     if prescription.animal_species:
         client_bits.append(prescription.animal_species)
     draw_line("   ".join(client_bits), font=FONT_BOLD, size=9.5)
 
-    # --- Business (if this prescription is tied to a specific location) + address ---
-    business = prescription.client_business
+    # --- Address (business's, if tied to one, else the client's) ---
     address = business.address if business and business.address else (
         prescription.client.address if prescription.client else None
     )
-    location_bits = [business.name] if business else []
     if address:
-        location_bits.append(str(address))
-    if location_bits:
-        draw_line("  •  ".join(location_bits), size=7.5, gap_after=3)
+        draw_line(str(address), size=7.5, gap_after=3)
 
     # --- Drug name (most prominent line on the label) ---
     drug_line = medication.drug_name if medication else "—"

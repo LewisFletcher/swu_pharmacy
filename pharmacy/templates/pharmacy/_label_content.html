@@ -8,8 +8,7 @@
     <p>{{ prescription.practice.address }}</p>
     {% endif %}
     <hr>
-    <p><strong>Client:</strong> {{ prescription.client.name|default:"—" }}</p>
-    {% if prescription.client_business %}<p>{{ prescription.client_business.name }}</p>{% endif %}
+    <p><strong>Client:</strong> {% if prescription.client_business %}{{ prescription.client_business.name }} — {% endif %}{{ prescription.client.name|default:"—" }}</p>
     {% if prescription.client_business.address %}
     <p>{{ prescription.client_business.address }}</p>
     {% elif prescription.client.address %}

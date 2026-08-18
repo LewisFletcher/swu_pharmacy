@@ -1,6 +1,7 @@
 {% extends "index.html" %}
+{% load pharmacy_extras %}
 
-{% block title %}Prescription #{{ object.pk }} - SWU Pharm{% endblock %}
+{% block title %}Prescription #{{ object.pk }} - Swinging Udder Veterinary Services{% endblock %}
 
 {% block content %}
 <div class="max-w-3xl mx-auto px-4 sm:px-6 py-8">
@@ -26,7 +27,7 @@
                 </div>
                 <div>
                     <dt class="text-xs uppercase text-base-content/50">Client</dt>
-                    <dd class="text-base-content">{{ object.client }}</dd>
+                    <dd class="text-base-content">{{ object|client_display }}</dd>
                 </div>
                 <div>
                     <dt class="text-xs uppercase text-base-content/50">Doctor</dt>

@@ -13,7 +13,7 @@ LICENSE_ALERT_WINDOW_DAYS = 30
 @login_required
 def landing(request):
     recent_prescriptions = Prescription.objects.select_related(
-        "client", "medication", "doctor"
+        "client", "client_business", "medication", "doctor"
     )[:8]
     today = timezone.now().date()
     week_ago = today - timedelta(days=7)

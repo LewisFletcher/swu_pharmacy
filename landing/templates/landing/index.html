@@ -1,6 +1,7 @@
 {% extends "index.html" %}
+{% load pharmacy_extras %}
 
-{% block title %}Dashboard - SWU Pharm{% endblock %}
+{% block title %}Dashboard - Swinging Udder Veterinary Services{% endblock %}
 
 {% block content %}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
@@ -115,7 +116,7 @@
                         {% for prescription in recent_prescriptions %}
                         <tr class="hover">
                             <td>{{ prescription.date_of_prescription }}</td>
-                            <td>{{ prescription.client }}</td>
+                            <td>{{ prescription|client_display }}</td>
                             <td>{{ prescription.medication }}</td>
                             <td>{{ prescription.doctor|default:"—" }}</td>
                             <td class="text-right">

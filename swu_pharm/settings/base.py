@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     'django_tables2',
     'django_filters',
     'simple_history',
+    'django_recaptcha',
 
     # my apps
     'accounts',
@@ -116,6 +117,15 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
+
+# Adds a reCAPTCHA field to signup and forgot-password -- see accounts/forms.py.
+ACCOUNT_FORMS = {
+    'signup': 'accounts.forms.SignupForm',
+    'reset_password': 'accounts.forms.ResetPasswordForm',
+}
+
+RECAPTCHA_PUBLIC_KEY = os.environ['RECAPTCHA_PUBLIC_KEY']
+RECAPTCHA_PRIVATE_KEY = os.environ['RECAPTCHA_PRIVATE_KEY']
 
 
 # Database

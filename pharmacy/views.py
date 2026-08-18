@@ -66,6 +66,11 @@ class PrescriptionListView(LoginRequiredMixin, SingleTableMixin, FilterView):
     paginate_by = 25
     extra_context = {"title": "Dispensed Prescriptions", "add_url": "pharmacy:prescription-add"}
 
+    def get_queryset(self):
+        return super().get_queryset().select_related(
+            "medication", "client", "client_business", "doctor", "created_by"
+        )
+
     def get_table(self, **kwargs):
         table = super().get_table(**kwargs)
         table.can_delete = self.request.user.is_practice_admin
@@ -75,6 +80,11 @@ class PrescriptionListView(LoginRequiredMixin, SingleTableMixin, FilterView):
 class PrescriptionDetailView(LoginRequiredMixin, DetailView):
     model = Prescription
     template_name = "pharmacy/prescription_detail.html"
+
+    def get_queryset(self):
+        return super().get_queryset().select_related(
+            "medication", "client", "client_business", "doctor", "practice"
+        )
 
 
 class PrescriptionPrintView(LoginRequiredMixin, DetailView):
@@ -284,6 +294,9 @@ class ClientListView(LoginRequiredMixin, SingleTableView):
     extra_context = {"title": "Clients", "add_url": "pharmacy:client-add"}
     paginate_by = 25
 
+    def get_queryset(self):
+        return super().get_queryset().prefetch_related("businesses")
+
 
 class ClientCreateView(LoginRequiredMixin, CreateView):
     model = Client
@@ -490,10 +503,10 @@ class PracticeInviteSendView(LoginRequiredMixin, View):
             reverse("pharmacy:practice-invite-accept", args=[invite.token])
         )
         send_mail(
-            subject=f"You've been invited to join {invite.practice.name} on SWU Pharm",
+            subject=f"You've been invited to join {invite.practice.name} on Swinging Udder Veterinary Services",
             message=(
                 f"{invite.invited_by} has invited you to join {invite.practice.name} "
-                f"on SWU Pharm.\n\nAccept the invite here:\n{accept_url}\n"
+                f"on Swinging Udder Veterinary Services.\n\nAccept the invite here:\n{accept_url}\n"
             ),
             from_email=None,
             recipient_list=[invite.email],

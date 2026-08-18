@@ -2,6 +2,9 @@
 
 {% if field.is_hidden %}
     {{ field }}
+    {% if field.errors %}
+        {% include 'tailwind/layout/help_text_and_errors.html' %}
+    {% endif %}
 {% else %}
     <{% if tag %}{{ tag }}{% else %}div{% endif %} id="div_{{ field.auto_id }}" class="{% if wrapper_class %}{{ wrapper_class }} {% endif %}{% if field_class %}{{ field_class }}{% else %}mb-3{% endif %}">
     {% if field.label and form_show_labels %}

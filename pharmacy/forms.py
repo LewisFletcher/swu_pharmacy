@@ -2,6 +2,7 @@ from dal_alight.widgets import ListAlight, ModelAlight
 from django import forms
 
 from .models import Address, Client, ClientBusiness, Doctor, Medication, Practice, PracticeInvite, Prescription
+from .phone import normalize_us_phone
 
 
 class DaisyFormMixin:
@@ -23,6 +24,25 @@ class DaisyFormMixin:
             else:
                 css_class = 'input w-full'
             widget.attrs['class'] = f'{existing} {css_class}'.strip()
+
+
+class PhoneNumberFormMixin:
+    '''Standardizes any `phone_number` field to "(555) 123-4567" on save,
+    and hints the expected format via a placeholder.'''
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if 'phone_number' in self.fields:
+            self.fields['phone_number'].widget.attrs.setdefault('placeholder', '(555) 123-4567')
+
+    def clean_phone_number(self):
+        value = (self.cleaned_data.get('phone_number') or '').strip()
+        if not value:
+            return value
+        try:
+            return normalize_us_phone(value)
+        except ValueError:
+            raise forms.ValidationError('Enter a valid 10-digit US phone number, e.g. (555) 123-4567.')
 
 
 class NestedAddressFormMixin:
@@ -141,7 +161,7 @@ class MedicationForm(DaisyFormMixin, forms.ModelForm):
         fields = ('drug_name', 'active_ingredient', 'directions', 'milk_withhold_period', 'meat_withhold_period', 'approved_age')
 
 
-class DoctorForm(DaisyFormMixin, NestedAddressFormMixin, forms.ModelForm):
+class DoctorForm(DaisyFormMixin, PhoneNumberFormMixin, NestedAddressFormMixin, forms.ModelForm):
     class Meta:
         model = Doctor
         exclude = ('created_at', 'updated_at', 'created_by', 'updated_by', 'address')
@@ -150,13 +170,13 @@ class DoctorForm(DaisyFormMixin, NestedAddressFormMixin, forms.ModelForm):
         }
 
 
-class ClientForm(DaisyFormMixin, NestedAddressFormMixin, forms.ModelForm):
+class ClientForm(DaisyFormMixin, PhoneNumberFormMixin, NestedAddressFormMixin, forms.ModelForm):
     class Meta:
         model = Client
         fields = ('name', 'phone_number', 'email_address', 'species')
 
 
-class ClientBusinessForm(DaisyFormMixin, NestedAddressFormMixin, forms.ModelForm):
+class ClientBusinessForm(DaisyFormMixin, PhoneNumberFormMixin, NestedAddressFormMixin, forms.ModelForm):
     class Meta:
         model = ClientBusiness
         fields = ('name', 'phone_number', 'email', 'website')
@@ -182,7 +202,7 @@ class ClientBusinessForm(DaisyFormMixin, NestedAddressFormMixin, forms.ModelForm
         return cleaned_data
 
 
-class PracticeForm(DaisyFormMixin, NestedAddressFormMixin, forms.ModelForm):
+class PracticeForm(DaisyFormMixin, PhoneNumberFormMixin, NestedAddressFormMixin, forms.ModelForm):
     class Meta:
         model = Practice
         exclude = ('created_at', 'updated_at', 'created_by', 'updated_by', 'address')

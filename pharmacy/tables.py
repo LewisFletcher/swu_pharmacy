@@ -3,6 +3,7 @@ from datetime import date
 import django_tables2 as tables
 from django.utils.html import format_html
 
+from .display import client_display
 from .models import Client, Doctor, Medication, Prescription
 
 
@@ -54,6 +55,9 @@ class PrescriptionTable(tables.Table):
         sequence = fields + ("detail", "actions")
         order_by = "-date_of_prescription"
 
+    def render_client(self, record):
+        return client_display(record)
+
 
 class MedicationTable(tables.Table):
     actions = actions_column("pharmacy:medication-edit", "pharmacy:medication-delete")
@@ -85,6 +89,7 @@ class DoctorTable(tables.Table):
 
 
 class ClientTable(tables.Table):
+    business = tables.Column(verbose_name="Business", accessor="businesses", empty_values=(), orderable=False)
     detail = tables.TemplateColumn(
         '<a href="{% url "pharmacy:client-detail" record.pk %}" class="btn btn-xs btn-outline">View</a>',
         verbose_name="", orderable=False,
@@ -94,4 +99,8 @@ class ClientTable(tables.Table):
     class Meta:
         model = Client
         fields = ("name", "species", "phone_number", "email_address")
-        sequence = fields + ("detail", "actions")
+        sequence = ("business",) + fields + ("detail", "actions")
+
+    def render_business(self, record):
+        names = ", ".join(business.name for business in record.businesses.all())
+        return names or "—"
